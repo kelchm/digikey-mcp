@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import difflib
 import logging
 from fastmcp import FastMCP
 from dotenv import load_dotenv
@@ -336,6 +337,46 @@ def _normalize_text(s) -> str:
     return s
 
 
+def _suggest_close_names(target: str, names: list, n: int = 5) -> list:
+    """Top-n names by edit-distance similarity to target. Falls back to the first n
+    sorted names when nothing scores above the cutoff."""
+    matches = difflib.get_close_matches(str(target), [n for n in names if n], n=n, cutoff=0.5)
+    return matches or sorted(n for n in names if n)[:n]
+
+
+def _suggest_close_values(target, available_values: list, n: int = 5) -> list:
+    """Top-n FilterValue names closest to target.
+
+    If target parses as a pint Quantity, prefers magnitude proximity (the natural
+    notion of "close" for unit-bearing values). Otherwise falls back to edit-distance
+    string similarity. Catches the typo-470-as-473 case the old "20 smallest sorted
+    ascending" behavior failed to help with.
+    """
+    target_qty = _to_quantity(target)
+    if target_qty is not None:
+        try:
+            target_mag = target_qty.to_base_units().magnitude
+        except Exception:
+            target_mag = None
+        if target_mag is not None:
+            scored = []
+            for fv in available_values:
+                fv_qty = _to_quantity(fv.get("ValueName"))
+                if fv_qty is None:
+                    continue
+                try:
+                    mag = fv_qty.to_base_units().magnitude
+                    scored.append((abs(mag - target_mag), fv.get("ValueName")))
+                except Exception:
+                    continue
+            if scored:
+                scored.sort()
+                return [name for _, name in scored[:n]]
+    names = [fv.get("ValueName") for fv in available_values if fv.get("ValueName")]
+    matches = difflib.get_close_matches(str(target), names, n=n, cutoff=0.3)
+    return matches or names[:n]
+
+
 def _match_parameter(name: str, available: list) -> dict:
     """Find a parameter in the available list by name. Raises ValueError with candidates if ambiguous/missing."""
     target = _normalize_text(name)
@@ -354,7 +395,11 @@ def _match_parameter(name: str, available: list) -> dict:
         raise ValueError(f"Attribute name '{name}' is ambiguous; candidates: {names}")
 
     all_names = sorted({p.get("ParameterName") for p in available if p.get("ParameterName")})
-    raise ValueError(f"Attribute name '{name}' not found in category. Available: {all_names}")
+    close = _suggest_close_names(name, all_names)
+    raise ValueError(
+        f"Attribute name {name!r} not found in category. "
+        f"Did you mean: {close}? ({len(all_names)} attributes total)"
+    )
 
 
 _UREG = pint.UnitRegistry()
@@ -500,9 +545,11 @@ def _match_values(param: dict, values) -> list:
                         continue
 
         if not matched_fvs:
-            sample = [fv.get("ValueName") for fv in available_values[:20]]
-            more = "" if len(available_values) <= 20 else f" (+{len(available_values)-20} more)"
-            raise ValueError(f"Value '{v}' not found for '{param.get('ParameterName')}'. Available: {sample}{more}")
+            close = _suggest_close_values(v, available_values)
+            raise ValueError(
+                f"Value {v!r} not found for '{param.get('ParameterName')}'. "
+                f"Did you mean: {close}? ({len(available_values)} values total)"
+            )
         for fv in matched_fvs:
             resolved.append(fv.get("ValueId"))
     return resolved

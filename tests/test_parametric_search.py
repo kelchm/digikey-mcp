@@ -209,7 +209,9 @@ def test_parent_category_with_no_attributes_still_works():
     assert "Products" in result
 
 
-def test_bad_attribute_name_lists_candidates():
+def test_bad_attribute_name_suggests_close_candidate():
+    """Typo in attribute name should produce a 'did you mean' with the most likely
+    intended name, not a dump of all 18 attributes."""
     with pytest.raises(ValueError) as exc:
         find_components(
             category_id=CATEGORY_ID,
@@ -218,17 +220,38 @@ def test_bad_attribute_name_lists_candidates():
         )
     msg = str(exc.value)
     assert "Capacitancce" in msg
-    assert "Capacitance" in msg  # listed as a candidate
+    assert "Did you mean" in msg
+    assert "Capacitance" in msg  # specifically suggested as a close match
 
 
-def test_bad_value_for_known_attribute_lists_samples():
+def test_bad_value_suggests_numerically_nearest():
+    """Typo in a unit-bearing value should produce a 'did you mean' ranked by
+    magnitude proximity (not alphabetical order). Passing '473 µF' should suggest
+    '470 µF' near the top."""
+    with pytest.raises(ValueError) as exc:
+        find_components(
+            category_id=CATEGORY_ID,
+            attributes={"Capacitance": "473 µF"},
+            limit=1,
+        )
+    msg = str(exc.value)
+    assert "473 µF" in msg
+    assert "Did you mean" in msg
+    assert "470 µF" in msg  # the obvious magnitude-nearest histogram bucket
+
+
+def test_bad_value_non_quantity_input_falls_back_to_string_similarity():
+    """Garbage input (not a parseable quantity) shouldn't crash — falls back to
+    edit-distance suggestion against value names."""
     with pytest.raises(ValueError) as exc:
         find_components(
             category_id=CATEGORY_ID,
             attributes={"Capacitance": "12345 zorks"},
             limit=1,
         )
-    assert "12345 zorks" in str(exc.value)
+    msg = str(exc.value)
+    assert "12345 zorks" in msg
+    assert "Did you mean" in msg
 
 
 def test_to_quantity_handles_common_formats():
