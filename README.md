@@ -23,17 +23,37 @@ CLIENT_SECRET=your_digikey_client_secret
 USE_SANDBOX=false
 ```
 
-Set `USE_SANDBOX=true` to use DigiKey's sandbox environment for testing.
+Leave `USE_SANDBOX=false` (or omit it) for normal use. DigiKey's sandbox Product Search
+returns a single canned example product regardless of query, per their
+[FAQ](https://developer.digikey.com/faq) — it's useful only for OAuth/connectivity testing
+and will be silently misleading for real searches.
 
 ### 3. Run the server
 ```bash
 uv run python digikey_mcp_server.py
 ```
 
+### 4. Tests
+The test suite runs offline against captured API snapshots — no credentials needed,
+no quota consumed:
+```bash
+uv run pytest
+```
+To refresh the snapshots against the live API (requires valid `.env`):
+```bash
+uv run python tests/refresh_snapshots.py
+```
+The refresh script consumes a handful of API calls and writes JSON fixtures into
+`tests/fixtures/`. Test scenarios live in `tests/test_parametric_search.py`; the
+matching capture scenarios live in `tests/refresh_snapshots.py`. Add a new scenario
+to both and re-run refresh to extend coverage.
+
 ## Available Tools
 
 ### Search Methods
-- `keyword_search(keywords, limit=5, manufacturer_id=None, category_id=None, search_options=None, sort_field=None, sort_order="Ascending")` - Search DigiKey products by keyword with sorting and filtering
+- `find_components(category_id, attributes=None, keywords="", limit=25, sort_by_attribute=None, sort_order="Ascending", in_stock_only=False)` - Parametric search by attribute (capacitance, diameter, etc.). Takes human-readable names/values, resolves them to DigiKey ids internally, returns slim results, and can sort client-side by any parametric attribute (e.g. "rated life").
+- `keyword_search(keywords, limit=5, manufacturer_id=None, category_id=None, search_options=None, sort_field=None, sort_order="Ascending")` - Free-text search by keyword or part number. For attribute-based queries, use `find_components`.
+- `get_parametric_filters(category_id, keywords="", limit=1)` - List the available parametric attributes and values for a category (used internally by `find_components`; useful for advanced callers who want to inspect the available filters).
 - `search_manufacturers()` - Get all product manufacturers
 - `search_categories()` - Get all product categories
 - `search_product_substitutions(product_number, limit=10, search_options=None, exclude_marketplace=False)` - Find substitute products
@@ -91,6 +111,62 @@ product_details("296-8875-1-ND")
 # Get pricing for specific quantity
 get_product_pricing("296-8875-1-ND", requested_quantity=100)
 ```
+
+### Parametric Search
+
+Use `find_components` to constrain results by attribute (capacitance, diameter, lifetime, etc.).
+Pass human-readable attribute names and values; the tool resolves them to DigiKey ids internally
+and returns slim results.
+
+**Discrete match:**
+```python
+find_components(
+    category_id="58",  # Aluminum Electrolytic Capacitors
+    attributes={"Capacitance": "470 µF"},
+    sort_by_attribute="Lifetime @ Temp.",
+    sort_order="Descending",
+    in_stock_only=True,
+)
+```
+
+**Range match** — pass `{"min": ..., "max": ...}` (either bound optional):
+```python
+find_components(
+    category_id="58",
+    attributes={
+        "Capacitance": {"min": "100 µF", "max": "1000 µF"},
+        "Diameter - Seated (Max)": {"max": "10mm"},
+    },
+)
+```
+
+Ranges work for any parameter whose values are clean unit-bearing quantities (Capacitance,
+Voltage, Resistance, Dimensions, etc.). Unit parsing is delegated to [pint](https://pint.readthedocs.io/),
+so bounds and histogram values can use *different* units in the same family — `{"min": "0.5 mF"}`
+will correctly match histogram values stored as `"500 µF"` and above.
+
+For parameters with non-quantity values (e.g. `"8000 Hrs @ 105°C"` for lifetime, `"±20%"` for
+tolerance), range matching errors out with sample values; use discrete value matching or a
+list of values instead.
+
+If an attribute name or value doesn't match, the error message lists close candidates so you can retry.
+
+#### How it works (the trick)
+
+The DigiKey v4 keyword-search endpoint can't do a true category browse — empty `Keywords` returns
+a 400 and `"*"` is treated as a literal-character match, yielding only a handful of products with
+a sparse 1–3-bucket facet histogram. The workaround: **use the category's own name as the
+`Keywords` value**. That's a high-recall match that broadly hits everything in the category, while
+`CategoryFilter` scopes the results to the leaf. `find_components` does this automatically by
+looking up the category name via `/categories/{id}` (cached per process).
+
+#### Notes / limits
+
+- `category_id` is required (parameters are category-scoped — find it via `search_categories`).
+- The DigiKey API does not sort by parametric attributes — `find_components` does this client-side
+  *after* the fetch, so very large result sets need a higher `limit` to sort over a meaningful slice.
+- `get_parametric_filters(category_id)` is exposed as an escape hatch for advanced callers who want
+  to inspect the available parameter names and value histograms before composing a query.
 
 ## Claude Desktop Integration
 
