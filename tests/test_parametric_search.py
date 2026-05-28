@@ -303,3 +303,57 @@ def test_to_quantity_propagates_unrelated_errors(monkeypatch):
 def test_to_quantity_cross_unit_equality():
     assert srv._to_quantity("0.5 mF") == srv._to_quantity("500 µF")
     assert srv._to_quantity("0.5 mF") < srv._to_quantity("1 F")
+
+
+@pytest.mark.parametrize("digikey_spelling,canonical", [
+    # Ohms — the spelling that broke testing
+    ("100 Ohms",   "100 ohm"),
+    ("4.7 kOhms",  "4.7 kohm"),
+    ("100 mOhms",  "100 milliohm"),
+    ("100 µOhms",  "100 microohm"),
+    # Other DigiKey spellings observed or likely
+    ("100 kHertz", "100 kHz"),
+    ("10 Henries", "10 H"),
+    ("1 Farad",    "1 F"),
+    ("5 Volts",    "5 V"),
+    ("50 Amps",    "50 A"),
+    ("300 Watts",  "300 W"),
+])
+def test_to_quantity_handles_digikey_unit_spellings(digikey_spelling, canonical):
+    """DigiKey spells out unit names with capitalization and plurals that pint's
+    default registry rejects. The alias definitions in the module should make
+    every form equivalent to pint's canonical spelling."""
+    assert srv._to_quantity(digikey_spelling) == srv._to_quantity(canonical)
+
+
+def test_to_quantity_cross_prefix_ohms_equivalent():
+    """The specific failure mode from the test report: '4700 Ohms' should equal
+    '4.7 kOhms' so discrete match finds the kOhms-tier bucket from a bare-Ohms input."""
+    assert srv._to_quantity("4700 Ohms") == srv._to_quantity("4.7 kOhms")
+    assert srv._to_quantity("100 µOhms") == srv._to_quantity("0.1 mOhms")
+
+
+def test_match_values_resistance_range_works_with_word_units():
+    """Range queries against a Resistance histogram (values like '4.7 kOhms') used
+    to hard-error because the parser didn't recognize the 'Ohms' word-token. With
+    the registry aliases in place, ranges work and cross-tier aliases collapse."""
+    param = {
+        "ParameterName": "Resistance",
+        "ParameterType": "UnitOfMeasure",
+        "FilterValues": [
+            {"ValueId": "100 Ohms",  "ValueName": "100 Ohms",  "ProductCount": 100},
+            {"ValueId": "1 kOhms",   "ValueName": "1 kOhms",   "ProductCount": 200},
+            {"ValueId": "4.7 kOhms", "ValueName": "4.7 kOhms", "ProductCount": 300},
+            {"ValueId": "10 kOhms",  "ValueName": "10 kOhms",  "ProductCount": 400},
+            {"ValueId": "100 kOhms", "ValueName": "100 kOhms", "ProductCount": 500},
+        ],
+    }
+    # Cross-prefix discrete match.
+    assert srv._match_values(param, "4700 Ohms") == ["4.7 kOhms"]
+    # Range that sweeps across prefix tiers.
+    resolved = srv._match_values(param, {"min": "1000 Ohms", "max": "10000 Ohms"})
+    assert "1 kOhms" in resolved
+    assert "4.7 kOhms" in resolved
+    assert "10 kOhms" in resolved
+    assert "100 kOhms" not in resolved
+    assert "100 Ohms" not in resolved

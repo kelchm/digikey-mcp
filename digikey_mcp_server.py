@@ -403,6 +403,20 @@ def _match_parameter(name: str, available: list) -> dict:
 
 
 _UREG = pint.UnitRegistry()
+# DigiKey writes spelled-out unit names with capitalization and plurals that pint's
+# default registry rejects ('Ohms', 'kOhms', 'Henries', 'Volts', etc.). Register them
+# as aliases — pint then handles SI prefixes on top automatically, so '4.7 kOhms' and
+# '100 µOhms' parse correctly without any further work.
+for _alias_def in (
+    "@alias ohm = Ohm = Ohms = ohms",
+    "@alias hertz = Hertz",
+    "@alias henry = Henries = henries = Henry",
+    "@alias farad = Farad = Farads = farads",
+    "@alias volt = Volt = Volts = volts",
+    "@alias ampere = Amp = Amps = amps",
+    "@alias watt = Watt = Watts = watts",
+):
+    _UREG.define(_alias_def)
 # Operators/separators that signal a compound expression DigiKey uses for non-quantity
 # value formatting. We reject these before pint evaluates them as math (see _to_quantity).
 #   '@'  — DigiKey's coupled-value separator (Ripple Current @ 100 kHz). Pint reads as
