@@ -466,20 +466,106 @@ def _match_values(param: dict, values) -> list:
     for v in values:
         target = _normalize_text(v)
         exact = [fv for fv in available_values if _normalize_text(fv.get("ValueName")) == target]
-        match = exact[0] if len(exact) == 1 else None
-        if not match:
+        primary = exact[0] if len(exact) == 1 else None
+        if not primary:
             contains = [fv for fv in available_values if target and target in _normalize_text(fv.get("ValueName"))]
             if len(contains) == 1:
-                match = contains[0]
+                primary = contains[0]
             elif len(contains) > 1:
                 names = [fv.get("ValueName") for fv in contains]
                 raise ValueError(f"Value '{v}' for '{param.get('ParameterName')}' is ambiguous: {names}")
-        if not match:
+
+        # Expand to magnitude aliases. DigiKey enumerates the same physical value under
+        # multiple unit strings as distinct buckets ('1 mF' and '1000 µF'). Empirically
+        # both return the same product set (test report) but we don't know that's
+        # universal — a product tagged only under one alias would be silently dropped if
+        # we passed just the literal match. Always send DigiKey every magnitude-equivalent
+        # ValueId so the result is a union; display-side dedup happens separately.
+        if primary:
+            matched_fvs = _expand_to_magnitude_aliases(primary, available_values)
+        else:
+            # No string-based hit — try a pure quantity-equality match (cross-prefix
+            # input like '0.47 mF' when the histogram only enumerates '470 µF').
+            user_qty = _to_quantity(v)
+            matched_fvs = []
+            if user_qty is not None:
+                for fv in available_values:
+                    fv_qty = _to_quantity(fv.get("ValueName"))
+                    if fv_qty is None:
+                        continue
+                    try:
+                        if user_qty == fv_qty:
+                            matched_fvs.append(fv)
+                    except (pint.DimensionalityError, pint.OffsetUnitCalculusError, TypeError):
+                        continue
+
+        if not matched_fvs:
             sample = [fv.get("ValueName") for fv in available_values[:20]]
             more = "" if len(available_values) <= 20 else f" (+{len(available_values)-20} more)"
             raise ValueError(f"Value '{v}' not found for '{param.get('ParameterName')}'. Available: {sample}{more}")
-        resolved.append(match.get("ValueId"))
+        for fv in matched_fvs:
+            resolved.append(fv.get("ValueId"))
     return resolved
+
+
+def _expand_to_magnitude_aliases(primary: dict, available: list) -> list:
+    """Return primary plus every FilterValue with the same base-unit magnitude.
+
+    Defensive against DigiKey tagging the same physical value under multiple unit
+    strings as separate buckets ('1 mF' / '1000 µF'). We don't know if DigiKey
+    always aliases internally — passing the union of ValueIds guarantees we don't
+    drop products that happen to be tagged under a different alias. Primary always
+    comes first so display order is stable.
+    """
+    qty = _to_quantity(primary.get("ValueName"))
+    if qty is None:
+        return [primary]
+    try:
+        target_mag = qty.to_base_units().magnitude
+    except Exception:
+        return [primary]
+    aliases = [primary]
+    for fv in available:
+        if fv is primary:
+            continue
+        other = _to_quantity(fv.get("ValueName"))
+        if other is None:
+            continue
+        try:
+            if other.to_base_units().magnitude == target_mag:
+                aliases.append(fv)
+        except Exception:
+            continue
+    return aliases
+
+
+def _dedupe_by_magnitude(names: list) -> list:
+    """Collapse multiple unit-string representations of the same physical value into one.
+
+    DigiKey enumerates the same magnitude under multiple unit strings as separate buckets
+    ('1 mF' and '1000 µF', '0.1 µF' and '100 nF', etc.). For a range query they all match
+    the same product set, so reporting them as distinct matches inflates the count and
+    bloats the Sample. Keep the first occurrence per base-unit magnitude (DigiKey orders
+    histograms by ProductCount desc, so this is the most popular alias). Values that don't
+    parse via pint pass through unchanged — we can't normalize what we can't measure.
+    """
+    seen = set()
+    out = []
+    for name in names:
+        q = _to_quantity(name)
+        if q is None:
+            out.append(name)
+            continue
+        try:
+            key = q.to_base_units().magnitude
+        except Exception:
+            out.append(name)
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(name)
+    return out
 
 
 def _slim_product(product: dict) -> dict:
@@ -595,11 +681,12 @@ def find_components(
         # dict says "the user asked for a range" — the literal list isn't what they specified,
         # and dumping hundreds of bucket names back at them isn't informative.
         if is_range:
+            distinct_names = _dedupe_by_magnitude(matched_names)
             applied[param.get("ParameterName")] = {
-                "MatchedCount": len(matched_names),
-                "From": matched_names[0] if matched_names else None,
-                "To": matched_names[-1] if matched_names else None,
-                "Sample": matched_names[:5],
+                "MatchedCount": len(distinct_names),
+                "From": distinct_names[0] if distinct_names else None,
+                "To": distinct_names[-1] if distinct_names else None,
+                "Sample": distinct_names[:5],
             }
         else:
             applied[param.get("ParameterName")] = matched_names

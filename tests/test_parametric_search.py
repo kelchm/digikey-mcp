@@ -85,6 +85,45 @@ def test_same_unit_range():
         assert p["ParameterMap"].get("Capacitance") is not None
 
 
+def test_match_values_expands_to_magnitude_aliases():
+    """When DigiKey enumerates the same physical value under multiple unit strings
+    (e.g. '1 mF' and '1000 µF' are separate buckets that may select different product
+    subsets), we must pass ALL magnitude-equivalent ValueIds to DigiKey — not just the
+    one the user literally typed. Otherwise we silently drop products tagged only
+    under the other alias."""
+    param = {
+        "ParameterName": "Capacitance",
+        "ParameterType": "UnitOfMeasure",
+        "FilterValues": [
+            {"ValueId": "1 mF",    "ValueName": "1 mF",    "ProductCount": 1000},
+            {"ValueId": "1000 µF", "ValueName": "1000 µF", "ProductCount": 800},
+            {"ValueId": "470 µF",  "ValueName": "470 µF",  "ProductCount": 500},
+        ],
+    }
+    # Exact-match input → expands to both aliases.
+    assert sorted(srv._match_values(param, "1 mF")) == sorted(["1 mF", "1000 µF"])
+    assert sorted(srv._match_values(param, "1000 µF")) == sorted(["1 mF", "1000 µF"])
+    # Cross-prefix input not in the histogram → resolves via fallback to all aliases.
+    assert sorted(srv._match_values(param, "0.001 F")) == sorted(["1 mF", "1000 µF"])
+    # Unambiguous single value → no alias expansion needed.
+    assert srv._match_values(param, "470 µF") == ["470 µF"]
+
+
+def test_match_values_falls_back_via_cross_prefix_quantity():
+    """`0.47 mF` should resolve to `470 µF` even though the literal string isn't in the
+    histogram — closes the asymmetry between the discrete and range matching paths."""
+    param = {
+        "ParameterName": "Capacitance",
+        "ParameterType": "UnitOfMeasure",
+        "FilterValues": [
+            {"ValueId": "470 µF", "ValueName": "470 µF", "ProductCount": 500},
+            {"ValueId": "100 µF", "ValueName": "100 µF", "ProductCount": 300},
+        ],
+    }
+    assert srv._match_values(param, "0.47 mF") == ["470 µF"]
+    assert srv._match_values(param, "0.0001 F") == ["100 µF"]
+
+
 def test_range_on_coupled_unit_parameter_is_rejected():
     """Coupled-unit parameters (e.g. 'Ripple Current @ Low Frequency' valued '500 mA @ 100 kHz')
     have two axes per value. A range query is semantically ill-defined; under the old behavior
@@ -104,7 +143,10 @@ def test_range_on_coupled_unit_parameter_is_rejected():
 
 
 def test_cross_unit_range():
-    """The headline pint capability: bound in mF, histogram in µF."""
+    """The headline pint capability: bound in mF, histogram in µF. Also verifies the
+    magnitude-dedup behavior — cat 58's Capacitance histogram has many mF/µF aliases
+    in this range, so MatchedCount must reflect distinct physical values, not raw
+    bucket count. Before dedup this range returned 212 buckets; ~104 are aliases."""
     result = find_components(
         category_id=CATEGORY_ID,
         attributes={"Capacitance": {"min": "0.5 mF", "max": "5 mF"}},
@@ -115,6 +157,10 @@ def test_cross_unit_range():
     assert summary["From"] == "500 µF"
     # 470 µF must not be in the sample (it's below the lower bound).
     assert "470 µF" not in summary["Sample"]
+    # Sample must not contain two entries with the same base-unit magnitude.
+    sample_quantities = [srv._to_quantity(s) for s in summary["Sample"]]
+    base_magnitudes = [q.to_base_units().magnitude for q in sample_quantities if q is not None]
+    assert len(base_magnitudes) == len(set(base_magnitudes)), "Sample contains alias dupes"
 
 
 def test_keyword_search_returns_raw_digikey_shape_with_category_filter():
