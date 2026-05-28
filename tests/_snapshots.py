@@ -42,6 +42,8 @@ def fixture_name(method: str, url: str, body) -> str:
         for entry in sorted(pf.get("ParameterFilters") or [], key=lambda x: x.get("ParameterId", 0)):
             pid = entry.get("ParameterId")
             value_ids = [fv.get("Id") for fv in (entry.get("FilterValues") or [])]
+            if not value_ids:
+                continue
             if len(value_ids) == 1:
                 parts.append(f"p{pid}_{_slug(value_ids[0])}")
             else:

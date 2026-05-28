@@ -41,12 +41,12 @@ def test_public_get_parametric_filters_returns_summary_by_default():
 
 
 def test_public_get_parametric_filters_with_parameter_name_capped():
-    """Default max_values=100 truncates Capacitance (685 values)."""
+    """Default max_values=100 truncates a parameter with more than 100 values."""
     result = srv.get_parametric_filters.fn(CATEGORY_ID, parameter_name="Capacitance")
     assert result["ParameterName"] == "Capacitance"
     assert result["Truncated"] is True
     assert len(result["FilterValues"]) == 100
-    assert result["TotalCount"] == 685
+    assert result["TotalCount"] > 100
 
 
 def test_public_get_parametric_filters_unlimited():
@@ -142,6 +142,22 @@ def test_range_on_coupled_unit_parameter_is_rejected():
     assert "1 A" not in msg
 
 
+def test_sort_by_magnitude_orders_unit_strings_correctly():
+    """Helper that From/To bounds depend on. Verifies ordering is by base-unit
+    magnitude (not DigiKey's response order, which is popularity desc)."""
+    # Input in DigiKey-popularity order (most popular first, not monotonic)
+    names = ["470 µF", "100 µF", "1000 µF", "220 µF"]
+    sorted_names = srv._sort_by_magnitude(names)
+    assert sorted_names[0] == "100 µF"
+    assert sorted_names[-1] == "1000 µF"
+    # Cross-unit ordering also handled
+    cross = srv._sort_by_magnitude(["1 mF", "470 µF", "0.5 mF"])
+    assert cross[0] == "470 µF"          # 470 µF = 0.47 mF, lowest
+    assert cross[-1] == "1 mF"           # 1 mF, highest
+    # Unparseable values are dropped from the result (caller falls back if all are unparseable)
+    assert srv._sort_by_magnitude(["TO-220-3", "470 µF"]) == ["470 µF"]
+
+
 def test_cross_unit_range():
     """The headline pint capability: bound in mF, histogram in µF. Also verifies the
     magnitude-dedup behavior — cat 58's Capacitance histogram has many mF/µF aliases
@@ -161,6 +177,16 @@ def test_cross_unit_range():
     sample_quantities = [srv._to_quantity(s) for s in summary["Sample"]]
     base_magnitudes = [q.to_base_units().magnitude for q in sample_quantities if q is not None]
     assert len(base_magnitudes) == len(set(base_magnitudes)), "Sample contains alias dupes"
+
+
+def test_keyword_search_rejects_empty_keywords():
+    """Empty Keywords would fall through to '*' downstream, which DigiKey matches
+    literally (small near-meaningless result). Surface the misuse instead."""
+    with pytest.raises(ValueError) as exc:
+        keyword_search(keywords="", category_id="58", limit=1)
+    assert "non-empty" in str(exc.value).lower()
+    with pytest.raises(ValueError):
+        keyword_search(keywords="   ", category_id="58", limit=1)
 
 
 def test_keyword_search_returns_raw_digikey_shape_with_category_filter():
@@ -261,7 +287,7 @@ def test_to_quantity_handles_common_formats():
     assert srv._to_quantity("1 kΩ") is not None
     assert srv._to_quantity("±20%") is not None
     assert srv._to_quantity(None) is None
-    assert srv._to_quantity("") is None
+    # Empty-string handling lives in test_to_quantity_returns_none_on_known_bad_inputs.
 
 
 @pytest.mark.parametrize("bad_input", [

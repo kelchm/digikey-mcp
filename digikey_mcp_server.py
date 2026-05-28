@@ -216,6 +216,15 @@ def keyword_search(keywords: str, limit: int = 5, manufacturer_id: str = None, c
         sort_field: Field to sort by. Options: None, Packaging, ProductStatus, DigiKeyProductNumber, ManufacturerProductNumber, Manufacturer, MinimumQuantity, QuantityAvailable, Price, Supplier, PriceManufacturerStandardPackage
         sort_order: Sort direction - Ascending or Descending (default: Ascending)
     """
+    # Empty Keywords would silently fall through to the "*" placeholder downstream — which
+    # DigiKey treats as a literal-character match (yielding a tiny, near-meaningless result
+    # set), not as "give me everything". Surface the problem instead.
+    if not keywords or not keywords.strip():
+        raise ValueError(
+            "keywords must be a non-empty string. "
+            "For attribute-based search use find_components; for a category browse use "
+            "find_components(category_id, ...) with no keyword."
+        )
     return _do_keyword_search(
         keywords=keywords,
         limit=limit,
@@ -600,6 +609,23 @@ def _expand_to_magnitude_aliases(primary: dict, available: list) -> list:
     return aliases
 
 
+def _sort_by_magnitude(names: list) -> list:
+    """Return names sorted ascending by base-unit magnitude. Names that don't parse via
+    pint are dropped (used only to compute From/To bounds, where unparseable values
+    can't be meaningfully ordered against each other anyway)."""
+    pairs = []
+    for n in names:
+        q = _to_quantity(n)
+        if q is None:
+            continue
+        try:
+            pairs.append((q.to_base_units().magnitude, n))
+        except Exception:
+            continue
+    pairs.sort()
+    return [n for _, n in pairs]
+
+
 def _dedupe_by_magnitude(names: list) -> list:
     """Collapse multiple unit-string representations of the same physical value into one.
 
@@ -710,20 +736,23 @@ def find_components(
     narrow the query with parametric filters until the result set fits in one page, then
     sort the returned products[] in your own code.
     """
-    filters_meta = _get_parametric_filters(category_id=category_id, keywords="", limit=1)
-
-    # Broad parent categories (e.g. cat 20 Connectors, cat 32 Integrated Circuits) return
-    # no parametric filters — DigiKey only computes facets at the leaf level. The error you'd
-    # get later from _match_parameter is confusing ("Available: []") because it points at the
-    # attribute name when the real problem is the category. Catch it up front when the caller
-    # actually asked for attribute filtering.
-    if attributes and not filters_meta:
-        cat_name = _get_category_name(category_id)
-        raise ValueError(
-            f"Category {category_id} ({cat_name!r}) has no parametric attributes — DigiKey "
-            f"computes facets only at the leaf level, and this appears to be a parent category. "
-            f"Use search_categories or get_category_by_id to find a leaf subcategory."
-        )
+    # Only fetch the parametric histogram when the caller actually needs to resolve
+    # attribute names — keyword-only calls (no attributes) don't, and the discovery
+    # request is a wasted POST otherwise.
+    filters_meta = []
+    if attributes:
+        filters_meta = _get_parametric_filters(category_id=category_id, keywords="", limit=1)
+        # Broad parent categories (e.g. cat 20 Connectors, cat 32 Integrated Circuits) return
+        # no parametric filters — DigiKey only computes facets at the leaf level. The error
+        # from _match_parameter ("Available: []") would point at the attribute name when the
+        # real problem is the category.
+        if not filters_meta:
+            cat_name = _get_category_name(category_id)
+            raise ValueError(
+                f"Category {category_id} ({cat_name!r}) has no parametric attributes — DigiKey "
+                f"computes facets only at the leaf level, and this appears to be a parent category. "
+                f"Use search_categories or get_category_by_id to find a leaf subcategory."
+            )
 
     parameter_filters = {}
     applied = {}
@@ -743,10 +772,16 @@ def find_components(
         # and dumping hundreds of bucket names back at them isn't informative.
         if is_range:
             distinct_names = _dedupe_by_magnitude(matched_names)
+            # From/To must reflect the actual numeric bounds of the matched set, not
+            # DigiKey's response order (which is by ProductCount desc — so the old code
+            # was labelling "the most popular alias" as From and "the least popular" as
+            # To, which is wrong). Sample stays in popularity order — that's what makes
+            # it informative.
+            by_magnitude = _sort_by_magnitude(distinct_names)
             applied[param.get("ParameterName")] = {
                 "MatchedCount": len(distinct_names),
-                "From": distinct_names[0] if distinct_names else None,
-                "To": distinct_names[-1] if distinct_names else None,
+                "From": by_magnitude[0] if by_magnitude else (distinct_names[0] if distinct_names else None),
+                "To": by_magnitude[-1] if by_magnitude else (distinct_names[-1] if distinct_names else None),
                 "Sample": distinct_names[:5],
             }
         else:
