@@ -266,28 +266,64 @@ def _get_parametric_filters(category_id: str, keywords: str = "", limit: int = 1
 
 
 @mcp.tool()
-def get_parametric_filters(category_id: str, keywords: str = "", limit: int = 1):
-    """Discover the parametric filters (attribute names and value histograms) available for a category.
+def get_parametric_filters(
+    category_id: str,
+    parameter_name: str = None,
+    max_values: int = 100,
+    keywords: str = "",
+):
+    """Discover the parametric filters available for a category.
 
-    Returns one entry per parameter (Capacitance, Diameter, Lifetime @ Temp., ...), each with the
-    full list of discrete values DigiKey indexes for that category. `find_components` consumes
-    this internally; call it directly to introspect a category before composing a query.
+    By default returns a SUMMARY — one entry per parameter with its name, type, total value
+    count, and three sample values. To get the actual ValueIds/ValueNames for one parameter,
+    call again with `parameter_name="Capacitance"` (fuzzy-matched).
 
     Args:
         category_id: The DigiKey category to inspect.
-        keywords: Optional override for the search keyword used to scope the histogram. When
-            empty (default), the category's own name is used — this is what makes DigiKey
-            return the full per-category facet histogram. Override only to narrow further
-            (e.g. "Nichicon" to see only that manufacturer's values).
-        limit: Number of product records returned alongside the facets. Default 1 — the facet
-            histogram is computed server-side over the full match set and does not depend on
-            this value, so 1 minimizes payload.
+        parameter_name: If set, return FilterValues for this parameter only.
+        max_values: Max FilterValues to return (top by ProductCount). Default 100.
+            Set to 0 for unlimited.
+        keywords: Optional override for the keyword that scopes the facet histogram. When
+            empty (default) the category's own name is used.
 
     Returns:
-        List of {ParameterId, ParameterName, ParameterType,
-                 FilterValues: [{ValueId, ValueName, ProductCount, RangeFilterType}]}.
+        Summary form (default):
+            [{ParameterName, ParameterType, TotalCount, SampleValues: [...]}]
+        Per-parameter form (when parameter_name is set):
+            {ParameterId, ParameterName, ParameterType, TotalCount, Truncated, FilterValues: [...]}
     """
-    return _get_parametric_filters(category_id=category_id, keywords=keywords, limit=limit)
+    filters = _get_parametric_filters(category_id=category_id, keywords=keywords)
+
+    if parameter_name:
+        param = _match_parameter(parameter_name, filters)
+        all_values = param.get("FilterValues") or []
+        ranked = sorted(all_values, key=lambda v: -(v.get("ProductCount") or 0))
+        truncated = max_values > 0 and len(ranked) > max_values
+        values = ranked[:max_values] if max_values > 0 else ranked
+        return {
+            "ParameterId": param.get("ParameterId"),
+            "ParameterName": param.get("ParameterName"),
+            "ParameterType": param.get("ParameterType"),
+            "TotalCount": len(all_values),
+            "Truncated": truncated,
+            "FilterValues": values,
+        }
+
+    return [
+        {
+            "ParameterName": p.get("ParameterName"),
+            "ParameterType": p.get("ParameterType"),
+            "TotalCount": len(p.get("FilterValues") or []),
+            "SampleValues": [
+                v.get("ValueName")
+                for v in sorted(
+                    p.get("FilterValues") or [],
+                    key=lambda v: -(v.get("ProductCount") or 0),
+                )[:3]
+            ],
+        }
+        for p in filters
+    ]
 
 
 def _normalize_text(s) -> str:
@@ -412,54 +448,35 @@ def _match_values(param: dict, values) -> list:
     return resolved
 
 
-def _parametric_sort_key(value):
-    """Sort key for client-side parametric sort.
-
-    Bucket order:
-      0: parseable as a pint Quantity → sort by magnitude in base units
-      1: has a leading number but isn't a clean unit (e.g. '8000 Hrs @ 105°C') → sort by that number
-      2: no numeric content → sort alphabetically
-      3: missing entirely → sort last
-    Ties within a bucket fall back to the original string for stable ordering.
-    """
-    if value is None:
-        return (3, 0.0, "")
-    s = str(value)
-    q = _to_quantity(s)
-    if q is not None:
-        try:
-            return (0, float(q.to_base_units().magnitude), s.lower())
-        except Exception:
-            pass
-    m = re.search(r"[-+]?\d*\.?\d+", s)
-    if m:
-        try:
-            return (1, float(m.group(0)), s.lower())
-        except ValueError:
-            pass
-    return (2, 0.0, s.lower())
-
-
 def _slim_product(product: dict) -> dict:
-    """Trim a DigiKey Product to the fields most useful in an LLM context, plus a flat parameters dict."""
+    """Trim a DigiKey Product to the fields most useful in an LLM context.
+
+    Fields straight-from-DigiKey keep their original PascalCase name. Fields where we change
+    the *shape* (object → string, list-of-objects → flat dict, etc.) get a distinct name so
+    callers reading DigiKey's docs don't get misled:
+      - ManufacturerName: the .Name extracted from DigiKey's Manufacturer object
+      - ProductDescription: the short description string from DigiKey's Description object
+      - ParameterMap: name→value flat dict reduced from DigiKey's Parameters list-of-objects
+      - DigiKeyProductNumber: the primary variation's DK PN. DigiKey itself only exposes this
+        nested in ProductVariations[], so reusing the name at top level doesn't shadow anything.
+    """
     variations = product.get("ProductVariations") or []
     manufacturer = product.get("Manufacturer") or {}
     description = product.get("Description") or {}
-    parameters = {
-        pv.get("ParameterText"): pv.get("ValueText")
-        for pv in (product.get("Parameters") or [])
-        if pv.get("ParameterText")
-    }
     return {
-        "mfr_part_number": product.get("ManufacturerProductNumber"),
-        "digikey_part_number": variations[0].get("DigiKeyProductNumber") if variations else None,
-        "manufacturer": manufacturer.get("Name") or manufacturer.get("Value"),
-        "description": description.get("ProductDescription"),
-        "unit_price": product.get("UnitPrice"),
-        "quantity_available": product.get("QuantityAvailable"),
-        "datasheet_url": product.get("DatasheetUrl"),
-        "product_url": product.get("ProductUrl"),
-        "parameters": parameters,
+        "ManufacturerProductNumber": product.get("ManufacturerProductNumber"),
+        "DigiKeyProductNumber": variations[0].get("DigiKeyProductNumber") if variations else None,
+        "ManufacturerName": manufacturer.get("Name") or manufacturer.get("Value"),
+        "ProductDescription": description.get("ProductDescription"),
+        "UnitPrice": product.get("UnitPrice"),
+        "QuantityAvailable": product.get("QuantityAvailable"),
+        "DatasheetUrl": product.get("DatasheetUrl"),
+        "ProductUrl": product.get("ProductUrl"),
+        "ParameterMap": {
+            pv.get("ParameterText"): pv.get("ValueText")
+            for pv in (product.get("Parameters") or [])
+            if pv.get("ParameterText")
+        },
     }
 
 
@@ -469,8 +486,6 @@ def find_components(
     attributes: dict = None,
     keywords: str = "",
     limit: int = 25,
-    sort_by_attribute: str = None,
-    sort_order: str = "Ascending",
     in_stock_only: bool = False,
 ):
     """High-level parametric component search. Resolves human-readable attribute names/values to DigiKey ids and returns slim results.
@@ -480,8 +495,6 @@ def find_components(
         find_components(
             category_id="58",
             attributes={"Capacitance": "470 µF"},
-            sort_by_attribute="Lifetime @ Temp.",
-            sort_order="Descending",
             in_stock_only=True,
         )
 
@@ -505,27 +518,44 @@ def find_components(
         keywords: Optional free-text keywords. When omitted, the category's own name is used
             as Keywords — this is what makes DigiKey return the full category set.
         limit: Max results to return (default 25, DigiKey caps at 50).
-        sort_by_attribute: Optional attribute name to sort by, applied client-side after fetch
-            (the DigiKey API does not sort by parametric attributes).
-        sort_order: "Ascending" or "Descending" for sort_by_attribute (default Ascending).
         in_stock_only: If True, restrict to in-stock products.
 
     Returns:
-        {"products_count": int, "products": [slim_product, ...], "applied_filters": {...}}
+        {"ProductsCount": int, "AppliedFilters": {...}, "Products": [slim_product, ...]}
+
+    Note on sorting: DigiKey can't sort by parametric attributes server-side, and sorting
+    the returned page client-side would be misleading (it would sort N results from a much
+    larger matching set, not the global top-N). To get the actual top-K by some attribute,
+    narrow the query with parametric filters until the result set fits in one page, then
+    sort the returned products[] in your own code.
     """
     filters_meta = _get_parametric_filters(category_id=category_id, keywords="", limit=1)
 
     parameter_filters = {}
     applied = {}
     for name, values in (attributes or {}).items():
+        is_range = isinstance(values, dict) and ("min" in values or "max" in values)
         param = _match_parameter(name, filters_meta)
         value_ids = _match_values(param, values)
         parameter_filters[param["ParameterId"]] = value_ids
-        applied[param.get("ParameterName")] = [
+        matched_names = [
             fv.get("ValueName")
             for fv in (param.get("FilterValues") or [])
             if fv.get("ValueId") in value_ids
         ]
+        # The shape of `applied` signals the kind of query. A list says "the user asked for
+        # these specific values" (and the caller probably wants to see them all). A summary
+        # dict says "the user asked for a range" — the literal list isn't what they specified,
+        # and dumping hundreds of bucket names back at them isn't informative.
+        if is_range:
+            applied[param.get("ParameterName")] = {
+                "MatchedCount": len(matched_names),
+                "From": matched_names[0] if matched_names else None,
+                "To": matched_names[-1] if matched_names else None,
+                "Sample": matched_names[:5],
+            }
+        else:
+            applied[param.get("ParameterName")] = matched_names
 
     raw = _do_keyword_search(
         keywords=keywords,
@@ -538,14 +568,10 @@ def find_components(
 
     products = [_slim_product(p) for p in (raw.get("Products") or [])]
 
-    if sort_by_attribute:
-        reverse = sort_order.lower() == "descending"
-        products.sort(key=lambda p: _parametric_sort_key(p["parameters"].get(sort_by_attribute)), reverse=reverse)
-
     return {
-        "products_count": raw.get("ProductsCount"),
-        "applied_filters": applied,
-        "products": products,
+        "ProductsCount": raw.get("ProductsCount"),
+        "AppliedFilters": applied,
+        "Products": products,
     }
 
 

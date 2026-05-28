@@ -16,16 +16,42 @@ def test_category_name_lookup():
     assert srv._get_category_name(CATEGORY_ID) == "Aluminum Electrolytic Capacitors"
 
 
-def test_parametric_filters_returns_full_histogram():
+def test_internal_get_parametric_filters_returns_full_histogram():
+    """The internal helper still returns the full data for find_components to consume."""
     filters = srv._get_parametric_filters(CATEGORY_ID)
     by_name = {p["ParameterName"]: p for p in filters}
     cap = by_name["Capacitance"]
-    # The full per-category histogram (vs. the 1-3 buckets we'd get without the
-    # category-name-as-keyword trick) is the central thing this MCP unlocks.
     assert len(cap["FilterValues"]) > 100
     value_names = [v["ValueName"] for v in cap["FilterValues"]]
     assert "0.1 µF" in value_names
     assert "470 µF" in value_names
+
+
+def test_public_get_parametric_filters_returns_summary_by_default():
+    """The public tool returns a small summary, not the megabyte-scale full histogram."""
+    summary = srv.get_parametric_filters.fn(CATEGORY_ID)
+    assert isinstance(summary, list)
+    by_name = {p["ParameterName"]: p for p in summary}
+    cap = by_name["Capacitance"]
+    assert cap["TotalCount"] > 100
+    assert len(cap["SampleValues"]) == 3
+    # No FilterValues key — that's the whole point of summary mode.
+    assert "FilterValues" not in cap
+
+
+def test_public_get_parametric_filters_with_parameter_name_capped():
+    """Default max_values=100 truncates Capacitance (685 values)."""
+    result = srv.get_parametric_filters.fn(CATEGORY_ID, parameter_name="Capacitance")
+    assert result["ParameterName"] == "Capacitance"
+    assert result["Truncated"] is True
+    assert len(result["FilterValues"]) == 100
+    assert result["TotalCount"] == 685
+
+
+def test_public_get_parametric_filters_unlimited():
+    result = srv.get_parametric_filters.fn(CATEGORY_ID, parameter_name="Capacitance", max_values=0)
+    assert result["Truncated"] is False
+    assert len(result["FilterValues"]) == result["TotalCount"]
 
 
 def test_discrete_value_match():
@@ -34,11 +60,11 @@ def test_discrete_value_match():
         attributes={"Capacitance": "470 µF"},
         limit=3,
     )
-    assert result["products_count"] > 0
-    assert result["applied_filters"] == {"Capacitance": ["470 µF"]}
-    assert len(result["products"]) > 0
-    for p in result["products"]:
-        assert p["parameters"]["Capacitance"] == "470 µF"
+    assert result["ProductsCount"] > 0
+    assert result["AppliedFilters"] == {"Capacitance": ["470 µF"]}
+    assert len(result["Products"]) > 0
+    for p in result["Products"]:
+        assert p["ParameterMap"]["Capacitance"] == "470 µF"
 
 
 def test_same_unit_range():
@@ -47,11 +73,15 @@ def test_same_unit_range():
         attributes={"Capacitance": {"min": "100 µF", "max": "470 µF"}},
         limit=3,
     )
-    matched = result["applied_filters"]["Capacitance"]
-    assert "100 µF" in matched
-    assert "470 µF" in matched
-    assert "0.1 µF" not in matched  # below the bound
-    assert "1000 µF" not in matched  # above the bound
+    # Range matched 45 values, so AppliedFilters is summarized rather than a full list.
+    summary = result["AppliedFilters"]["Capacitance"]
+    assert summary["MatchedCount"] == 45
+    assert summary["From"] == "100 µF"
+    assert summary["To"] == "470 µF"
+    # Verify the actual products returned have a Capacitance value (within the bounds — the
+    # bound enforcement is exercised in test_cross_unit_range and the unit tests).
+    for p in result["Products"]:
+        assert p["ParameterMap"].get("Capacitance") is not None
 
 
 def test_cross_unit_range():
@@ -61,27 +91,11 @@ def test_cross_unit_range():
         attributes={"Capacitance": {"min": "0.5 mF", "max": "5 mF"}},
         limit=2,
     )
-    matched = result["applied_filters"]["Capacitance"]
-    # 0.5 mF == 500 µF and 5 mF == 5000 µF; the histogram values in between are matched.
-    assert "500 µF" in matched
-    assert "1000 µF" in matched
-    assert "470 µF" not in matched  # 470 µF < 500 µF lower bound
-
-
-def test_client_side_sort_by_lifetime_desc():
-    """`Lifetime @ Temp.` isn't a pure unit string; sort falls back to the leading number."""
-    result = find_components(
-        category_id=CATEGORY_ID,
-        attributes={"Capacitance": {"min": "220 µF"}},
-        sort_by_attribute="Lifetime @ Temp.",
-        sort_order="Descending",
-        limit=5,
-    )
-    lifetimes = [p["parameters"].get("Lifetime @ Temp.") for p in result["products"]]
-    # Pull the leading integer from each; the sort should be non-increasing.
-    import re
-    numbers = [int(re.search(r"\d+", lt).group(0)) for lt in lifetimes if lt]
-    assert numbers == sorted(numbers, reverse=True)
+    summary = result["AppliedFilters"]["Capacitance"]
+    # 0.5 mF == 500 µF, 5 mF == 5000 µF; the lower bound is 500 µF.
+    assert summary["From"] == "500 µF"
+    # 470 µF must not be in the sample (it's below the lower bound).
+    assert "470 µF" not in summary["Sample"]
 
 
 def test_bad_attribute_name_lists_candidates():

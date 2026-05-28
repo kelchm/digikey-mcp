@@ -51,7 +51,7 @@ to both and re-run refresh to extend coverage.
 ## Available Tools
 
 ### Search Methods
-- `find_components(category_id, attributes=None, keywords="", limit=25, sort_by_attribute=None, sort_order="Ascending", in_stock_only=False)` - Parametric search by attribute (capacitance, diameter, etc.). Takes human-readable names/values, resolves them to DigiKey ids internally, returns slim results, and can sort client-side by any parametric attribute (e.g. "rated life").
+- `find_components(category_id, attributes=None, keywords="", limit=25, in_stock_only=False)` - Parametric search by attribute (capacitance, diameter, etc.). Takes human-readable names/values, resolves them to DigiKey ids internally, returns slim results.
 - `keyword_search(keywords, limit=5, manufacturer_id=None, category_id=None, search_options=None, sort_field=None, sort_order="Ascending")` - Free-text search by keyword or part number. For attribute-based queries, use `find_components`.
 - `get_parametric_filters(category_id, keywords="", limit=1)` - List the available parametric attributes and values for a category (used internally by `find_components`; useful for advanced callers who want to inspect the available filters).
 - `search_manufacturers()` - Get all product manufacturers
@@ -123,8 +123,6 @@ and returns slim results.
 find_components(
     category_id="58",  # Aluminum Electrolytic Capacitors
     attributes={"Capacitance": "470 µF"},
-    sort_by_attribute="Lifetime @ Temp.",
-    sort_order="Descending",
     in_stock_only=True,
 )
 ```
@@ -163,8 +161,10 @@ looking up the category name via `/categories/{id}` (cached per process).
 #### Notes / limits
 
 - `category_id` is required (parameters are category-scoped — find it via `search_categories`).
-- The DigiKey API does not sort by parametric attributes — `find_components` does this client-side
-  *after* the fetch, so very large result sets need a higher `limit` to sort over a meaningful slice.
+- The DigiKey API does not sort by parametric attributes, and sorting a single returned page
+  client-side would mislead (you'd be re-ordering N results from a much larger matching set,
+  not the global top-N). To get top-K by some attribute, narrow the parametric filters until
+  the result set fits in one page, then sort `products[]` in your own code.
 - `get_parametric_filters(category_id)` is exposed as an escape hatch for advanced callers who want
   to inspect the available parameter names and value histograms before composing a query.
 

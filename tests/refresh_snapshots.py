@@ -79,12 +79,10 @@ find_components(
     limit=3,
 )
 
-print("  scenario: range + client-side sort by Lifetime")
+print("  scenario: open-ended range (min only)")
 find_components(
     category_id=CATEGORY_ID,
     attributes={"Capacitance": {"min": "220 µF"}},
-    sort_by_attribute="Lifetime @ Temp.",
-    sort_order="Descending",
     limit=5,
 )
 
