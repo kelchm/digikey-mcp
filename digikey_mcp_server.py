@@ -358,6 +358,14 @@ def _match_parameter(name: str, available: list) -> dict:
 
 
 _UREG = pint.UnitRegistry()
+# Operators/separators that signal a compound expression DigiKey uses for non-quantity
+# value formatting. We reject these before pint evaluates them as math (see _to_quantity).
+#   '@'  — DigiKey's coupled-value separator (Ripple Current @ 100 kHz). Pint reads as
+#          matrix multiplication, falls back to scalar product. Silent garbage.
+#   '/'  followed by digits — slash-separated alternatives like '100/120/200V'. Pint
+#          evaluates as division.
+#   ','  — comma-separated values; pint behavior is parser-version-dependent.
+_COMPOUND_OPERATOR_RE = re.compile(r"@|/\s*\d|,")
 
 
 def _to_quantity(value):
@@ -375,6 +383,15 @@ def _to_quantity(value):
     if value is None:
         return None
     s = str(value).strip().lstrip("±")
+    # Pre-filter compound expressions before pint sees them. Pint's parser reuses Python's
+    # AST and silently evaluates operators — '500 mA @ 100 kHz' becomes a scalar product
+    # (50000 mA·kHz), '100/120/200V' becomes a fraction, etc. The resulting Quantity has
+    # the wrong dimensionality for our use case but compares "successfully" against other
+    # similarly-mangled values, producing silent-garbage filter results. None here forces
+    # callers (e.g. range matching) to either fall back to discrete matching or error out
+    # cleanly via their None-check.
+    if _COMPOUND_OPERATOR_RE.search(s):
+        return None
     try:
         return _UREG.Quantity(s)
     except (pint.PintError, ValueError, TypeError, AssertionError):
@@ -396,6 +413,18 @@ def _match_values(param: dict, values) -> list:
 
     # Range form: {"min": ..., "max": ...}
     if isinstance(values, dict) and ("min" in values or "max" in values):
+        # Coupled-unit parameters (e.g. 'Ripple Current @ Low Frequency', valued like
+        # '500 mA @ 100 kHz') describe two axes — a current and a frequency. There's no
+        # single scalar magnitude to compare against, so a range query is semantically
+        # ill-defined: pint would silently compute (current × frequency) and produce
+        # plausible-looking but wrong results. Refuse it explicitly.
+        if param.get("ParameterType") == "CoupledUnitOfMeasure":
+            raise ValueError(
+                f"Range matching is not supported on '{param.get('ParameterName')}' — it's a "
+                f"coupled-unit parameter (two axes per value, e.g. current @ frequency) and the "
+                f"two axes can't be reduced to a single magnitude. Use a discrete value or a "
+                f"list of values from the histogram instead."
+            )
         lo = _to_quantity(values.get("min"))
         hi = _to_quantity(values.get("max"))
         sample = [fv.get("ValueName") for fv in available_values[:10]]

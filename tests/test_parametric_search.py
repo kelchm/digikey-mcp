@@ -85,6 +85,24 @@ def test_same_unit_range():
         assert p["ParameterMap"].get("Capacitance") is not None
 
 
+def test_range_on_coupled_unit_parameter_is_rejected():
+    """Coupled-unit parameters (e.g. 'Ripple Current @ Low Frequency' valued '500 mA @ 100 kHz')
+    have two axes per value. A range query is semantically ill-defined; under the old behavior
+    pint silently computed scalar products and returned plausible-looking garbage. Now it errors."""
+    with pytest.raises(ValueError) as exc:
+        find_components(
+            category_id=CATEGORY_ID,
+            attributes={"Ripple Current @ Low Frequency": {"min": "500 mA @ 100 kHz", "max": "1 A @ 100 kHz"}},
+        )
+    msg = str(exc.value)
+    assert "Ripple Current" in msg
+    assert "coupled-unit" in msg.lower()
+    # The error must NOT mention specific values from the input — that would imply the bounds
+    # were considered, which they explicitly aren't.
+    assert "500 mA" not in msg
+    assert "1 A" not in msg
+
+
 def test_cross_unit_range():
     """The headline pint capability: bound in mF, histogram in µF."""
     result = find_components(
@@ -189,6 +207,18 @@ def test_to_quantity_returns_none_on_known_bad_inputs(bad_input):
     """Every exception pint raises across the DigiKey filter-value corpus must be caught
     and returned as None — that's the contract the range-matching code depends on."""
     assert srv._to_quantity(bad_input) is None
+
+
+@pytest.mark.parametrize("compound_input,reason", [
+    ("500 mA @ 100 kHz",  "pint reads '@' as scalar product → 50,000 mA·kHz (compound dim)"),
+    ("1 A @ 100 kHz",     "same — would compare against other coupled values as products"),
+    ("100/120/200V",      "pint reads '/' as division → 100/120/200 V = ~0.004 V"),
+    ("1.5 mA, 3 mA",      "comma — parser behavior is dialect-dependent"),
+])
+def test_to_quantity_rejects_compound_expressions(compound_input, reason):
+    """Strings with operators pint would silently evaluate as math must return None up front
+    so range matching can't produce wrong-magnitude results (see the Ripple Current bug)."""
+    assert srv._to_quantity(compound_input) is None, reason
 
 
 def test_to_quantity_propagates_unrelated_errors(monkeypatch):
