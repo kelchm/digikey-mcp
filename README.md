@@ -1,12 +1,12 @@
 # DigiKey MCP Server
 
-A Model Context Protocol (MCP) server for DigiKey's Product Search API using FastMCP.
+An MCP server for DigiKey's Product Search v4 API, built on FastMCP. The main tool is `find_components`: parametric component search by attribute name and value, with cross-unit range support.
 
 ## Requirements
 
 - Python 3.10+
-- uv package manager
-- DigiKey API credentials (CLIENT_ID and CLIENT_SECRET)
+- [uv](https://docs.astral.sh/uv/)
+- DigiKey API credentials (`CLIENT_ID` and `CLIENT_SECRET`)
 
 ## Setup
 
@@ -15,27 +15,26 @@ A Model Context Protocol (MCP) server for DigiKey's Product Search API using Fas
 uv sync
 ```
 
-### 2. Set up environment variables
-Create a `.env` file in the project root:
+### 2. Environment variables
+Create `.env` in the project root:
 ```
 CLIENT_ID=your_digikey_client_id
 CLIENT_SECRET=your_digikey_client_secret
-USE_SANDBOX=false
 ```
 
-Leave `USE_SANDBOX=false` (or omit it) for normal use. DigiKey's sandbox Product Search
-returns a single canned example product regardless of query, per their
-[FAQ](https://developer.digikey.com/faq) — it's useful only for OAuth/connectivity testing
-and will be silently misleading for real searches.
+Optional:
+- `USE_SANDBOX=true` — DigiKey's sandbox returns a single canned product regardless of query (per their [FAQ](https://developer.digikey.com/faq)). Use only for OAuth/connectivity testing; never for real searches.
+- `DIGIKEY_OFFLINE_MODE=true` — skips OAuth at module import. Used by the offline test suite.
 
 ### 3. Run the server
 ```bash
 uv run python digikey_mcp_server.py
+# or, after the package installs:
+uv run digikey-mcp
 ```
 
 ### 4. Tests
-The test suite runs offline against captured API snapshots — no credentials needed,
-no quota consumed:
+The test suite runs offline against captured API snapshots — no credentials, no quota:
 ```bash
 uv run pytest
 ```
@@ -43,82 +42,33 @@ To refresh the snapshots against the live API (requires valid `.env`):
 ```bash
 uv run python tests/refresh_snapshots.py
 ```
-The refresh script consumes a handful of API calls and writes JSON fixtures into
-`tests/fixtures/`. Test scenarios live in `tests/test_parametric_search.py`; the
-matching capture scenarios live in `tests/refresh_snapshots.py`. Add a new scenario
-to both and re-run refresh to extend coverage.
+To add a new scenario, add the capture call to `tests/refresh_snapshots.py` and the assertion to `tests/test_parametric_search.py`, then re-run refresh.
 
-## Available Tools
+## Tools
 
-### Search Methods
-- `find_components(category_id, attributes=None, keywords="", limit=25, in_stock_only=False)` - Parametric search by attribute (capacitance, diameter, etc.). Takes human-readable names/values, resolves them to DigiKey ids internally, returns slim results.
-- `keyword_search(keywords, limit=5, manufacturer_id=None, category_id=None, search_options=None, sort_field=None, sort_order="Ascending")` - Free-text search by keyword or part number. For attribute-based queries, use `find_components`.
-- `get_parametric_filters(category_id, keywords="", limit=1)` - List the available parametric attributes and values for a category (used internally by `find_components`; useful for advanced callers who want to inspect the available filters).
-- `search_manufacturers()` - Get all product manufacturers
-- `search_categories()` - Get all product categories
-- `search_product_substitutions(product_number, limit=10, search_options=None, exclude_marketplace=False)` - Find substitute products
+### Parametric search
 
-### Product Details
-- `product_details(product_number, manufacturer_id=None, customer_id="0")` - Get detailed product information
-- `get_category_by_id(category_id)` - Get specific category details
-- `get_product_media(product_number)` - Get product images, documents, and videos
-- `get_product_pricing(product_number, customer_id="0", requested_quantity=1)` - Get detailed pricing information
-- `get_digi_reel_pricing(product_number, requested_quantity, customer_id="0")` - Get DigiReel pricing
+- **`find_components(category_id, attributes=None, keywords="", limit=25, in_stock_only=False)`** — search by attribute name and value. Returns slim products. Discrete, list, and range inputs all supported.
+- **`get_parametric_filters(category_id, parameter_name=None, max_values=100, keywords="")`** — list the attributes available for a category. Returns a summary by default; pass `parameter_name="..."` to get the values for one specific parameter.
 
-### Sort Options for keyword_search
-Available sort fields:
-- `Packaging` - Sort by packaging type
-- `ProductStatus` - Sort by product status
-- `DigiKeyProductNumber` - Sort by DigiKey part number
-- `ManufacturerProductNumber` - Sort by manufacturer part number
-- `Manufacturer` - Sort by manufacturer name
-- `MinimumQuantity` - Sort by minimum order quantity
-- `QuantityAvailable` - Sort by available quantity
-- `Price` - Sort by price
-- `Supplier` - Sort by supplier
-- `PriceManufacturerStandardPackage` - Sort by manufacturer standard package price
+### Free-text and part lookups
+- `keyword_search(keywords, limit=5, manufacturer_id=None, category_id=None, search_options=None, sort_field=None, sort_order="Ascending")` — full-text search or part-number lookup. Returns DigiKey's raw response shape.
+- `product_details(product_number, manufacturer_id=None, customer_id="0")` — full product detail for a known part.
+- `search_product_substitutions(product_number, limit=10, search_options=None, exclude_marketplace=False)` — substitutes for a given part.
 
-Sort orders: `Ascending` or `Descending`
+### Reference data
+- `search_manufacturers()` — full manufacturer list (IDs usable as `manufacturer_id` elsewhere).
+- `search_categories()` — full category tree.
+- `get_category_by_id(category_id)` — single category detail.
 
-### Search Options
-Available filters for search methods:
-- `LeadFree` - Lead-free products only
-- `RoHSCompliant` - RoHS compliant products only
-- `InStock` - In-stock products only
-- `HasDatasheet` - Products with datasheets
-- `HasProductPhoto` - Products with photos
-- `Has3DModel` - Products with 3D models
-- `NewProduct` - New products only
+### Pricing and media
+- `get_product_pricing(product_number, customer_id="0", requested_quantity=1)` — full price tiers.
+- `get_digi_reel_pricing(product_number, requested_quantity, customer_id="0")` — DigiReel pricing.
+- `get_product_media(product_number)` — images, datasheets, videos.
 
-## Example Usage
+## Parametric search guide
 
-The server exposes MCP tools that can be used by MCP clients like Claude Desktop, or programmatically via FastMCP clients.
-
-### Search Examples
-```python
-# Basic keyword search
-keyword_search("resistor", limit=10)
-
-# Search with sorting by price (lowest first)
-keyword_search("capacitor", limit=5, sort_field="Price", sort_order="Ascending")
-
-# Search with filters
-keyword_search("LED", limit=10, search_options="InStock,RoHSCompliant")
-
-# Get product details
-product_details("296-8875-1-ND")
-
-# Get pricing for specific quantity
-get_product_pricing("296-8875-1-ND", requested_quantity=100)
-```
-
-### Parametric Search
-
-Use `find_components` to constrain results by attribute (capacitance, diameter, lifetime, etc.).
-Pass human-readable attribute names and values; the tool resolves them to DigiKey ids internally
-and returns slim results.
-
-**Discrete match:**
+### Discrete value
 ```python
 find_components(
     category_id="58",  # Aluminum Electrolytic Capacitors
@@ -127,7 +77,15 @@ find_components(
 )
 ```
 
-**Range match** — pass `{"min": ..., "max": ...}` (either bound optional):
+### List of values (match any)
+```python
+find_components(
+    category_id="58",
+    attributes={"Capacitance": ["100 µF", "470 µF", "1000 µF"]},
+)
+```
+
+### Range — `{min, max}` (either bound optional)
 ```python
 find_components(
     category_id="58",
@@ -138,48 +96,132 @@ find_components(
 )
 ```
 
-Ranges work for any parameter whose values are clean unit-bearing quantities (Capacitance,
-Voltage, Resistance, Dimensions, etc.). Unit parsing is delegated to [pint](https://pint.readthedocs.io/),
-so bounds and histogram values can use *different* units in the same family — `{"min": "0.5 mF"}`
-will correctly match histogram values stored as `"500 µF"` and above.
+### Cross-unit ranges
+Bounds and histogram values can use different units in the same family. `{"min": "0.5 mF"}` matches histogram values stored as `"500 µF"` and above. Unit parsing uses [pint](https://pint.readthedocs.io/).
 
-For parameters with non-quantity values (e.g. `"8000 Hrs @ 105°C"` for lifetime, `"±20%"` for
-tolerance), range matching errors out with sample values; use discrete value matching or a
-list of values instead.
+### Magnitude-alias expansion
+DigiKey stores the same physical value under multiple unit strings as separate histogram buckets — `"1 mF"` and `"1000 µF"` are two different entries. When you pass a discrete value, the tool finds every magnitude-equivalent ValueId and sends the union to DigiKey. That way you don't lose products tagged only under the other alias. `AppliedFilters` shows the expansion so you can see what was sent.
 
-If an attribute name or value doesn't match, the error message lists close candidates so you can retry.
+### Coupled-unit parameters
+Ranges don't work on `CoupledUnitOfMeasure` parameters like `Ripple Current @ Low Frequency`, where values look like `"500 mA @ 100 kHz"`. The tool rejects them with an error — two axes can't collapse to a single number you can compare. Use discrete or list values instead.
 
-#### How it works (the trick)
+### Parent categories
+Parent categories like `20` (Connectors) or `32` (ICs) return no parametric filters; DigiKey only computes facets at leaf categories. `find_components` raises a clear error telling you to find a leaf subcategory via `search_categories`.
 
-The DigiKey v4 keyword-search endpoint can't do a true category browse — empty `Keywords` returns
-a 400 and `"*"` is treated as a literal-character match, yielding only a handful of products with
-a sparse 1–3-bucket facet histogram. The workaround: **use the category's own name as the
-`Keywords` value**. That's a high-recall match that broadly hits everything in the category, while
-`CategoryFilter` scopes the results to the leaf. `find_components` does this automatically by
-looking up the category name via `/categories/{id}` (cached per process).
+### Error messages
+When a name or value doesn't resolve, the error includes a `Did you mean: [...]` list. Attribute names are ranked by edit distance. Values are ranked by magnitude proximity if pint can parse them (`"473 µF"` suggests `["470 µF", "480 µF", ...]`), otherwise by edit distance.
 
-#### Notes / limits
+### Why there's no parametric sort
+DigiKey's API can't sort by parametric attributes server-side. Sorting a returned page client-side would be misleading — you'd be re-ordering N results out of a much larger match set, not finding the actual top-N. If you want the top-K by some attribute, narrow with parametric filters until the result fits one page, then sort `Products[]` yourself.
 
-- `category_id` is required (parameters are category-scoped — find it via `search_categories`).
-- The DigiKey API does not sort by parametric attributes, and sorting a single returned page
-  client-side would mislead (you'd be re-ordering N results from a much larger matching set,
-  not the global top-N). To get top-K by some attribute, narrow the parametric filters until
-  the result set fits in one page, then sort `products[]` in your own code.
-- `get_parametric_filters(category_id)` is exposed as an escape hatch for advanced callers who want
-  to inspect the available parameter names and value histograms before composing a query.
+## Response shapes
 
-## Claude Desktop Integration
+### `find_components` returns
+```python
+{
+    "ProductsCount": int,        # total matches in DigiKey (may exceed len(Products))
+    "AppliedFilters": {
+        # Shape per attribute depends on what you passed in:
+        "Capacitance": ["470 µF", ...],     # discrete/list input → list of matched names
+        "Capacitance": {                     # range input → summary
+            "MatchedCount": 45,              # distinct physical magnitudes (aliases collapsed)
+            "From": "100 µF",                # most popular alias of the lowest match
+            "To": "470 µF",                  # most popular alias of the highest match
+            "Sample": ["100 µF", ...],       # first 5 by popularity, no alias dupes
+        },
+    },
+    "Products": [slim_product, ...]
+}
+```
 
-Add this to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+### Slim product
+Field names are PascalCase. Anything that passes through from DigiKey unchanged keeps its original name. Where we transformed the shape (object → string, list → flat dict), the field gets a different name so it doesn't collide with DigiKey's:
 
+```python
+{
+    "ManufacturerProductNumber": "...",   # straight passthrough
+    "DigiKeyProductNumber": "...",        # primary variation's DK PN (DigiKey only exposes
+                                          # this nested in ProductVariations; safe to reuse)
+    "ManufacturerName": "...",            # was DigiKey's Manufacturer object {Id, Name}
+    "ProductDescription": "...",          # was DigiKey's Description object
+    "UnitPrice": float,                   # passthrough
+    "QuantityAvailable": int,             # passthrough
+    "DatasheetUrl": "...",                # passthrough
+    "ProductUrl": "...",                  # passthrough
+    "ParameterMap": {                     # was DigiKey's Parameters list-of-objects
+        "Capacitance": "470 µF",
+        "Voltage - Rated": "25 V",
+        ...
+    },
+}
+```
+
+### `get_parametric_filters` — summary mode (default)
+```python
+[
+    {"ParameterName": "Capacitance", "ParameterType": "UnitOfMeasure",
+     "TotalCount": 685, "SampleValues": ["220 µF", "100 µF", "470 µF"]},
+    {"ParameterName": "Voltage - Rated", "ParameterType": "UnitOfMeasure",
+     "TotalCount": 81, "SampleValues": ["25 V", "16 V", "50 V"]},
+    ...
+]
+```
+
+### `get_parametric_filters` — drill-in mode (`parameter_name="..."`)
+```python
+{
+    "ParameterId": 2049,
+    "ParameterName": "Capacitance",
+    "ParameterType": "UnitOfMeasure",
+    "TotalCount": 685,           # total values in the histogram
+    "Truncated": True,           # whether FilterValues is a subset
+    "FilterValues": [            # top max_values by ProductCount
+        {"ValueId": "220 µF", "ValueName": "220 µF",
+         "ProductCount": 5761, "RangeFilterType": None},
+        ...
+    ],
+}
+```
+
+`keyword_search` and the other tools return DigiKey's raw response shape — see the v4 swagger in `docs/digikey_product_search_v4_swagger.json` for the full schema.
+
+## Notes on the v4 API
+
+Two things to know if you're hacking on this.
+
+**The category name has to be the keyword.** Empty `Keywords` returns a 400. `"*"` matches literally and gets you a sparse 1–3-bucket facet histogram. Sending the category's actual name (e.g. `"Aluminum Electrolytic Capacitors"`) with `CategoryFilter=58` is what produces the real per-category histogram — 685 capacitance values for cat 58 instead of 3. `find_components` does this lookup automatically and caches it.
+
+**Filters must nest under `FilterOptionsRequest`.** Top-level `ManufacturerId`, `CategoryId`, and `SearchOptionList` are silently ignored — no error, just unfiltered results. They have to be nested as `FilterOptionsRequest.ManufacturerFilter`, `.CategoryFilter`, and `.SearchOptions`. The swagger schema doesn't make this jump out.
+
+## Claude Desktop integration
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) — two options:
+
+**From a local checkout:**
 ```json
 {
   "mcpServers": {
     "digikey": {
       "command": "uv",
       "args": ["run", "python", "digikey_mcp_server.py"],
-      "cwd": "/path/to/project"
+      "cwd": "/path/to/digikey-mcp"
     }
   }
 }
-``` 
+```
+
+**Via `uvx` from this repo:**
+```json
+{
+  "mcpServers": {
+    "digikey": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/kelchm/digikey-mcp", "digikey-mcp"],
+      "env": {
+        "CLIENT_ID": "your_digikey_client_id",
+        "CLIENT_SECRET": "your_digikey_client_secret"
+      }
+    }
+  }
+}
+```
