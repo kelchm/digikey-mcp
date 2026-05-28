@@ -76,7 +76,7 @@
               "Id": 732,
               "Name": "Würth Elektronik"
             },
-            "QuantityAvailableforPackageType": 4773,
+            "QuantityAvailableforPackageType": 4768,
             "MaxQuantityForDistribution": 0,
             "MinimumOrderQuantity": 1,
             "StandardPackage": 0,
@@ -109,7 +109,7 @@
             "DigiReelFee": 0.0
           }
         ],
-        "QuantityAvailable": 58773,
+        "QuantityAvailable": 58768,
         "ProductStatus": {
           "Id": 0,
           "Status": "Active"

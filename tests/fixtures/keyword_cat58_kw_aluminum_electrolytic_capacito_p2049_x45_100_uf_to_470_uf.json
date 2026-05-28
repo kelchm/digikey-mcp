@@ -505,14 +505,14 @@
               "Id": 1189,
               "Name": "Rubycon"
             },
-            "QuantityAvailableforPackageType": 44397,
+            "QuantityAvailableforPackageType": 44395,
             "MaxQuantityForDistribution": 0,
             "MinimumOrderQuantity": 1,
             "StandardPackage": 0,
             "DigiReelFee": 0.0
           }
         ],
-        "QuantityAvailable": 44397,
+        "QuantityAvailable": 44395,
         "ProductStatus": {
           "Id": 0,
           "Status": "Active"
@@ -778,7 +778,7 @@
               "Id": 732,
               "Name": "Würth Elektronik"
             },
-            "QuantityAvailableforPackageType": 70358,
+            "QuantityAvailableforPackageType": 70334,
             "MaxQuantityForDistribution": 0,
             "MinimumOrderQuantity": 1,
             "StandardPackage": 0,
@@ -824,14 +824,14 @@
               "Id": 732,
               "Name": "Würth Elektronik"
             },
-            "QuantityAvailableforPackageType": 70358,
+            "QuantityAvailableforPackageType": 70334,
             "MaxQuantityForDistribution": 0,
             "MinimumOrderQuantity": 1,
             "StandardPackage": 0,
             "DigiReelFee": 7.0
           }
         ],
-        "QuantityAvailable": 70358,
+        "QuantityAvailable": 70334,
         "ProductStatus": {
           "Id": 0,
           "Status": "Active"

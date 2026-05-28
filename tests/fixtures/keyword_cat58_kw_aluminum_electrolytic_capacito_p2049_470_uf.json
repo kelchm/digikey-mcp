@@ -86,7 +86,7 @@
               "Id": 1189,
               "Name": "Rubycon"
             },
-            "QuantityAvailableforPackageType": 200,
+            "QuantityAvailableforPackageType": 196,
             "MaxQuantityForDistribution": 0,
             "MinimumOrderQuantity": 1,
             "StandardPackage": 0,
@@ -144,7 +144,7 @@
             "DigiReelFee": 0.0
           }
         ],
-        "QuantityAvailable": 10200,
+        "QuantityAvailable": 10196,
         "ProductStatus": {
           "Id": 0,
           "Status": "Active"
@@ -701,14 +701,14 @@
               "Id": 1189,
               "Name": "Rubycon"
             },
-            "QuantityAvailableforPackageType": 84860,
+            "QuantityAvailableforPackageType": 84850,
             "MaxQuantityForDistribution": 0,
             "MinimumOrderQuantity": 1,
             "StandardPackage": 0,
             "DigiReelFee": 0.0
           }
         ],
-        "QuantityAvailable": 84860,
+        "QuantityAvailable": 84850,
         "ProductStatus": {
           "Id": 0,
           "Status": "Active"

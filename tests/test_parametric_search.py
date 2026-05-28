@@ -8,6 +8,7 @@ import pytest
 import digikey_mcp_server as srv
 
 find_components = srv.find_components.fn
+keyword_search = srv.keyword_search.fn
 
 CATEGORY_ID = "58"  # Aluminum Electrolytic Capacitors
 
@@ -98,6 +99,52 @@ def test_cross_unit_range():
     assert "470 µF" not in summary["Sample"]
 
 
+def test_keyword_search_returns_raw_digikey_shape_with_category_filter():
+    """keyword_search is a thin wrapper around POST /search/keyword. Verify that:
+    - the response keeps DigiKey's raw shape (PascalCase, full Product objects), and
+    - CategoryFilter is honored (every product belongs to the requested leaf category).
+    The second check guards against regressions in the FilterOptionsRequest nesting that
+    would silently broaden the search."""
+    result = keyword_search(keywords="Nichicon", category_id="58", limit=3)
+    assert "ProductsCount" in result
+    assert "Products" in result
+    assert isinstance(result["Products"], list) and len(result["Products"]) > 0
+    for p in result["Products"]:
+        # Raw DigiKey shape — not the slim find_components shape.
+        assert "ManufacturerProductNumber" in p
+        assert "ProductVariations" in p
+        # CategoryFilter should land us in cat 58 (Aluminum Electrolytic Capacitors).
+        leaf_cats = [c.get("Name") for c in (p.get("Category") or {}).get("ChildCategories") or []]
+        assert "Aluminum Electrolytic Capacitors" in leaf_cats
+
+
+PARENT_CATEGORY_ID = "20"  # Connectors, Interconnects — has no parametric filters
+
+
+def test_parent_category_with_attributes_raises_helpful_error():
+    """Calling find_components with attributes against a parent category should fail
+    with a message that points at the category, not at the attribute name."""
+    with pytest.raises(ValueError) as exc:
+        find_components(
+            category_id=PARENT_CATEGORY_ID,
+            attributes={"Pin Count": "4"},
+        )
+    msg = str(exc.value)
+    assert PARENT_CATEGORY_ID in msg
+    assert "Connectors" in msg
+    assert "leaf" in msg.lower()
+    # Make sure the error is NOT the generic "attribute not found" path.
+    assert "Pin Count" not in msg
+
+
+def test_parent_category_with_no_attributes_still_works():
+    """Without attribute filters, find_components on a parent category should just
+    return whatever DigiKey gives — no early error."""
+    result = find_components(category_id=PARENT_CATEGORY_ID, limit=3)
+    assert "ProductsCount" in result
+    assert "Products" in result
+
+
 def test_bad_attribute_name_lists_candidates():
     with pytest.raises(ValueError) as exc:
         find_components(
@@ -128,8 +175,30 @@ def test_to_quantity_handles_common_formats():
     assert srv._to_quantity("±20%") is not None
     assert srv._to_quantity(None) is None
     assert srv._to_quantity("") is None
-    # DigiKey strings pint can't parse — must return None so range matching falls back.
-    assert srv._to_quantity("8000 Hrs @ 105°C") is None
+
+
+@pytest.mark.parametrize("bad_input", [
+    "8000 Hrs @ 105°C",      # UndefinedUnitError — 'Hrs' not in registry
+    "TO-220-3",              # UndefinedUnitError — 'TO' not in registry
+    "Approx. 470 µF",        # UndefinedUnitError — 'Approx' not in registry
+    "   ",                   # AssertionError on whitespace
+    "",                      # ValueError on empty
+    "{'foo': 'bar'}",        # AssertionError on garbage (str() of a dict, in case anyone passes one)
+])
+def test_to_quantity_returns_none_on_known_bad_inputs(bad_input):
+    """Every exception pint raises across the DigiKey filter-value corpus must be caught
+    and returned as None — that's the contract the range-matching code depends on."""
+    assert srv._to_quantity(bad_input) is None
+
+
+def test_to_quantity_propagates_unrelated_errors(monkeypatch):
+    """A genuine bug (typo, ImportError, etc.) must NOT be silently caught — the whole
+    point of narrowing the except clause was to surface those during development."""
+    def broken_quantity(_s):
+        raise AttributeError("simulated typo in pint API")
+    monkeypatch.setattr(srv._UREG, "Quantity", broken_quantity)
+    with pytest.raises(AttributeError, match="simulated typo"):
+        srv._to_quantity("470 µF")
 
 
 def test_to_quantity_cross_unit_equality():

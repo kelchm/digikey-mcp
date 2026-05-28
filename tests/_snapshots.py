@@ -32,10 +32,11 @@ def fixture_name(method: str, url: str, body) -> str:
     if url.endswith("/search/keyword"):
         fo = body.get("FilterOptionsRequest") or {}
         cat = (fo.get("CategoryFilter") or [{}])[0].get("Id", "any")
+        kw_slug = _slug(body.get("Keywords") or "any", 30)
 
         pf = fo.get("ParameterFilterRequest")
         if not pf:
-            return f"keyword_cat{cat}_discover"
+            return f"keyword_cat{cat}_kw_{kw_slug}"
 
         parts = []
         for entry in sorted(pf.get("ParameterFilters") or [], key=lambda x: x.get("ParameterId", 0)):
@@ -47,7 +48,7 @@ def fixture_name(method: str, url: str, body) -> str:
                 # Range / multi-value: include count and the bounds for searchability.
                 bounds = f"{_slug(value_ids[0])}_to_{_slug(value_ids[-1])}"
                 parts.append(f"p{pid}_x{len(value_ids)}_{bounds}")
-        return f"keyword_cat{cat}_" + "_".join(parts)
+        return f"keyword_cat{cat}_kw_{kw_slug}_" + "_".join(parts)
 
     # Fallback for any future endpoint.
     safe = re.sub(r"[^a-z0-9]+", "_", url.lower()).strip("_")[-40:]

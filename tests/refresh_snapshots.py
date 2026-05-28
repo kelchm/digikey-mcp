@@ -57,6 +57,7 @@ srv._make_request = recording_make_request
 
 # Tools are wrapped by FastMCP; unwrap to call the underlying function directly.
 find_components = srv.find_components.fn
+keyword_search = srv.keyword_search.fn
 
 # === SCENARIOS — mirror what test_parametric_search.py exercises ===
 CATEGORY_ID = "58"  # Aluminum Electrolytic Capacitors
@@ -85,6 +86,14 @@ find_components(
     attributes={"Capacitance": {"min": "220 µF"}},
     limit=5,
 )
+
+print("  scenario: keyword_search with category filter")
+keyword_search(keywords="Nichicon", category_id="58", limit=3)
+
+print("  scenario: parent category with no parametric filters (Connectors)")
+PARENT_CATEGORY_ID = "20"  # Connectors, Interconnects — broad parent, returns 0 facets
+srv._get_category_name(PARENT_CATEGORY_ID)
+srv._get_parametric_filters(PARENT_CATEGORY_ID)
 
 print("  scenario: cross-unit range (mF bound, µF histogram)")
 find_components(

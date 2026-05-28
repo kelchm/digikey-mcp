@@ -363,16 +363,21 @@ _UREG = pint.UnitRegistry()
 def _to_quantity(value):
     """Parse a DigiKey filter value (e.g. '470 µF', '12.5 mm', '1 kΩ') to a pint Quantity.
 
-    Returns None when the value isn't a clean unit string — e.g. '8000 Hrs @ 105°C',
-    '±20%', '100/120/200V', or any package code. Callers should treat None as "not
-    comparable" and fall back to exact-string matching.
+    Returns None when the value isn't a clean unit string — e.g. '8000 Hrs @ 105°C'
+    (undefined units), an empty/whitespace string, or a malformed input. Callers should
+    treat None as "not comparable" and fall back to exact-string matching.
+
+    The except clause is narrowed to the exception types pint actually raises for invalid
+    inputs (observed across DigiKey's filter-value corpus). Genuine bugs — typos against
+    the pint API, ImportError, etc. — propagate so they surface during development rather
+    than being silently swallowed as "this value can't be parsed."
     """
     if value is None:
         return None
     s = str(value).strip().lstrip("±")
     try:
         return _UREG.Quantity(s)
-    except Exception:
+    except (pint.PintError, ValueError, TypeError, AssertionError):
         return None
 
 
@@ -530,6 +535,19 @@ def find_components(
     sort the returned products[] in your own code.
     """
     filters_meta = _get_parametric_filters(category_id=category_id, keywords="", limit=1)
+
+    # Broad parent categories (e.g. cat 20 Connectors, cat 32 Integrated Circuits) return
+    # no parametric filters — DigiKey only computes facets at the leaf level. The error you'd
+    # get later from _match_parameter is confusing ("Available: []") because it points at the
+    # attribute name when the real problem is the category. Catch it up front when the caller
+    # actually asked for attribute filtering.
+    if attributes and not filters_meta:
+        cat_name = _get_category_name(category_id)
+        raise ValueError(
+            f"Category {category_id} ({cat_name!r}) has no parametric attributes — DigiKey "
+            f"computes facets only at the leaf level, and this appears to be a parent category. "
+            f"Use search_categories or get_category_by_id to find a leaf subcategory."
+        )
 
     parameter_filters = {}
     applied = {}
