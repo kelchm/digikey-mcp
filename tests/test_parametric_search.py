@@ -142,6 +142,44 @@ def test_range_on_coupled_unit_parameter_is_rejected():
     assert "1 A" not in msg
 
 
+def test_magnitude_key_handles_float_precision_artefacts():
+    """Pint's prefix conversion can introduce tiny float-rounding artefacts —
+    `0.1 µF` and `100 nF` are physically equal but their raw .magnitude values
+    differ (1e-07 vs 1.0000000000000001e-07). The rounded key collapses them."""
+    assert srv._magnitude_key(srv._to_quantity("0.1 µF")) == srv._magnitude_key(srv._to_quantity("100 nF"))
+    assert srv._magnitude_key(srv._to_quantity("0.0001 mF")) == srv._magnitude_key(srv._to_quantity("0.1 µF"))
+    # Genuinely different magnitudes must still produce different keys.
+    assert srv._magnitude_key(srv._to_quantity("470 µF")) != srv._magnitude_key(srv._to_quantity("480 µF"))
+
+
+def test_dedupe_by_magnitude_collapses_float_aliased_pairs():
+    """Regression: the dedupe used raw float equality, which split 0.1 µF from
+    100 nF as if they were distinct values."""
+    assert srv._dedupe_by_magnitude(["0.1 µF", "100 nF"]) == ["0.1 µF"]
+    assert srv._dedupe_by_magnitude(["100 nF", "0.1 µF"]) == ["100 nF"]
+
+
+def test_expand_to_magnitude_aliases_collapses_float_aliased_pairs():
+    available = [
+        {"ValueId": "0.1 µF", "ValueName": "0.1 µF", "ProductCount": 100},
+        {"ValueId": "100 nF", "ValueName": "100 nF", "ProductCount": 80},
+        {"ValueId": "470 µF", "ValueName": "470 µF", "ProductCount": 50},
+    ]
+    expanded = srv._expand_to_magnitude_aliases(available[0], available)
+    expanded_ids = [fv["ValueId"] for fv in expanded]
+    assert "100 nF" in expanded_ids
+    assert "470 µF" not in expanded_ids
+
+
+def test_find_components_strips_whitespace_keywords():
+    """Whitespace-only keywords used to slip through to _do_keyword_search's
+    `not keywords` check (truthy string) and got passed to DigiKey verbatim,
+    which 400s or returns empty. Strip them so the category-name fallback applies."""
+    # Should not raise — '   ' becomes '' becomes "use category name as keyword".
+    result = find_components(category_id="58", keywords="   ", limit=1)
+    assert "ProductsCount" in result
+
+
 def test_sort_by_magnitude_orders_unit_strings_correctly():
     """Helper that From/To bounds depend on. Verifies ordering is by base-unit
     magnitude (not DigiKey's response order, which is popularity desc)."""

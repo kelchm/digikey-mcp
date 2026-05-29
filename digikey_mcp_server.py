@@ -212,7 +212,10 @@ def keyword_search(keywords: str, limit: int = 5, manufacturer_id: str = None, c
         limit: Maximum number of results (default: 5)
         manufacturer_id: Filter by specific manufacturer ID
         category_id: Filter by specific category ID
-        search_options: Comma-delimited filters like LeadFree,RoHSCompliant,InStock
+        search_options: Comma-delimited values from the v4 SearchOptions enum. Valid values:
+            ChipOutpost, Has3DModel, HasCadModel, HasDatasheet, HasProductPhoto, InStock,
+            NewProduct, NonRohsCompliant, NormallyStocking, RohsCompliant. Note case
+            (RohsCompliant, not RoHSCompliant) — DigiKey ignores unknown values silently.
         sort_field: Field to sort by. Options: None, Packaging, ProductStatus, DigiKeyProductNumber, ManufacturerProductNumber, Manufacturer, MinimumQuantity, QuantityAvailable, Price, Supplier, PriceManufacturerStandardPackage
         sort_order: Sort direction - Ascending or Descending (default: Ascending)
     """
@@ -591,7 +594,7 @@ def _expand_to_magnitude_aliases(primary: dict, available: list) -> list:
     if qty is None:
         return [primary]
     try:
-        target_mag = qty.to_base_units().magnitude
+        target_key = _magnitude_key(qty)
     except Exception:
         return [primary]
     aliases = [primary]
@@ -602,11 +605,23 @@ def _expand_to_magnitude_aliases(primary: dict, available: list) -> list:
         if other is None:
             continue
         try:
-            if other.to_base_units().magnitude == target_mag:
+            if _magnitude_key(other) == target_key:
                 aliases.append(fv)
         except Exception:
             continue
     return aliases
+
+
+def _magnitude_key(q):
+    """Stable comparison/hash key for a pint Quantity's base-unit magnitude.
+
+    Pint's prefix conversion can introduce tiny float-rounding artefacts that make
+    physically-equal values compare unequal (`0.1 µF`.magnitude == 1e-07 but
+    `100 nF`.magnitude == 1.0000000000000001e-07). Rounding to 9 significant figures
+    is well below DigiKey's catalog precision (typically 3–4 sig figs) while wider
+    than every float-rounding artefact pint produces.
+    """
+    return float(f"{q.to_base_units().magnitude:.9e}")
 
 
 def _sort_by_magnitude(names: list) -> list:
@@ -644,7 +659,7 @@ def _dedupe_by_magnitude(names: list) -> list:
             out.append(name)
             continue
         try:
-            key = q.to_base_units().magnitude
+            key = _magnitude_key(q)
         except Exception:
             out.append(name)
             continue
@@ -736,6 +751,11 @@ def find_components(
     narrow the query with parametric filters until the result set fits in one page, then
     sort the returned products[] in your own code.
     """
+    # Normalize whitespace so '   ' doesn't slip through to DigiKey as a literal-character
+    # keyword match (the same issue keyword_search rejects). Empty after strip → use the
+    # category-name fallback downstream.
+    keywords = (keywords or "").strip()
+
     # Only fetch the parametric histogram when the caller actually needs to resolve
     # attribute names — keyword-only calls (no attributes) don't, and the discovery
     # request is a wasted POST otherwise.

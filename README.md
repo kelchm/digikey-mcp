@@ -17,7 +17,7 @@ uv sync
 
 ### 2. Environment variables
 Create `.env` in the project root:
-```
+```dotenv
 CLIENT_ID=your_digikey_client_id
 CLIENT_SECRET=your_digikey_client_secret
 ```
