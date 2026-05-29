@@ -124,6 +124,36 @@ def test_match_values_falls_back_via_cross_prefix_quantity():
     assert srv._match_values(param, "0.0001 F") == ["100 µF"]
 
 
+def test_match_values_discrete_fallback_handles_float_aliased_prefixes():
+    """Same float-precision pitfall the dedupe and alias-expansion paths handle:
+    `100 nF` and `0.1 µF` are physically equal but pint's `==` returns False
+    because of float-rounding artefacts. The fallback must use _magnitude_key
+    so a user typing one resolves to a histogram entry stored under the other."""
+    param = {
+        "ParameterName": "Capacitance",
+        "ParameterType": "UnitOfMeasure",
+        "FilterValues": [
+            # Only the µF form is in the histogram.
+            {"ValueId": "0.1 µF", "ValueName": "0.1 µF", "ProductCount": 500},
+        ],
+    }
+    assert srv._match_values(param, "100 nF") == ["0.1 µF"]
+
+
+def test_match_values_discrete_fallback_respects_dimensionality():
+    """Cross-prefix fallback must NOT match across dimensions even if magnitudes
+    happen to coincide. '1 Hz' and '1 F' both have magnitude 1; they shouldn't match."""
+    param = {
+        "ParameterName": "Capacitance",
+        "ParameterType": "UnitOfMeasure",
+        "FilterValues": [
+            {"ValueId": "1 F", "ValueName": "1 F", "ProductCount": 10},
+        ],
+    }
+    with pytest.raises(ValueError):
+        srv._match_values(param, "1 Hz")
+
+
 def test_range_on_coupled_unit_parameter_is_rejected():
     """Coupled-unit parameters (e.g. 'Ripple Current @ Low Frequency' valued '500 mA @ 100 kHz')
     have two axes per value. A range query is semantically ill-defined; under the old behavior

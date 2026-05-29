@@ -555,17 +555,28 @@ def _match_values(param: dict, values) -> list:
         if primary:
             matched_fvs = _expand_to_magnitude_aliases(primary, available_values)
         else:
-            # No string-based hit — try a pure quantity-equality match (cross-prefix
-            # input like '0.47 mF' when the histogram only enumerates '470 µF').
+            # No string-based hit — try a quantity-magnitude match (cross-prefix input
+            # like '0.47 mF' when the histogram only enumerates '470 µF', or '100 nF'
+            # vs '0.1 µF'). Use _magnitude_key rather than pint's `==` because the
+            # latter can return False for physically-equal cross-prefix quantities due
+            # to float-rounding artefacts (1e-07 vs 1.0000000000000001e-07).
             user_qty = _to_quantity(v)
             matched_fvs = []
             if user_qty is not None:
+                try:
+                    user_key = _magnitude_key(user_qty)
+                except Exception:
+                    user_key = None
                 for fv in available_values:
                     fv_qty = _to_quantity(fv.get("ValueName"))
                     if fv_qty is None:
                         continue
                     try:
-                        if user_qty == fv_qty:
+                        if (
+                            user_key is not None
+                            and user_qty.dimensionality == fv_qty.dimensionality
+                            and _magnitude_key(fv_qty) == user_key
+                        ):
                             matched_fvs.append(fv)
                     except (pint.DimensionalityError, pint.OffsetUnitCalculusError, TypeError):
                         continue
