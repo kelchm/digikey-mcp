@@ -1,0 +1,1237 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://api.digikey.com/products/v4/search/categories/20",
+    "body": null
+  },
+  "response": {
+    "Category": {
+      "CategoryId": 20,
+      "ParentId": 0,
+      "Name": "Connectors, Interconnects",
+      "ProductCount": 5675228,
+      "Children": [
+        {
+          "CategoryId": 2026,
+          "ParentId": 20,
+          "Name": "AC Power Connectors",
+          "ProductCount": 16370,
+          "Children": [
+            {
+              "CategoryId": 1170,
+              "ParentId": 2026,
+              "Name": "Plugs and Receptacles",
+              "ProductCount": 7637,
+              "Children": []
+            },
+            {
+              "CategoryId": 341,
+              "ParentId": 2026,
+              "Name": "Power Entry Connector Accessories",
+              "ProductCount": 1343,
+              "Children": []
+            },
+            {
+              "CategoryId": 301,
+              "ParentId": 2026,
+              "Name": "Power Entry Modules (PEM)",
+              "ProductCount": 7390,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2000,
+          "ParentId": 20,
+          "Name": "Backplane Connectors",
+          "ProductCount": 48314,
+          "Children": [
+            {
+              "CategoryId": 386,
+              "ParentId": 2000,
+              "Name": "ARINC",
+              "ProductCount": 784,
+              "Children": []
+            },
+            {
+              "CategoryId": 430,
+              "ParentId": 2000,
+              "Name": "ARINC Inserts",
+              "ProductCount": 786,
+              "Children": []
+            },
+            {
+              "CategoryId": 343,
+              "ParentId": 2000,
+              "Name": "Backplane Connector Accessories",
+              "ProductCount": 2217,
+              "Children": []
+            },
+            {
+              "CategoryId": 335,
+              "ParentId": 2000,
+              "Name": "Backplane Connector Contacts",
+              "ProductCount": 2364,
+              "Children": []
+            },
+            {
+              "CategoryId": 372,
+              "ParentId": 2000,
+              "Name": "Backplane Connector Housings",
+              "ProductCount": 9345,
+              "Children": []
+            },
+            {
+              "CategoryId": 307,
+              "ParentId": 2000,
+              "Name": "DIN 41612",
+              "ProductCount": 4740,
+              "Children": []
+            },
+            {
+              "CategoryId": 406,
+              "ParentId": 2000,
+              "Name": "Hard Metric, Standard",
+              "ProductCount": 3665,
+              "Children": []
+            },
+            {
+              "CategoryId": 407,
+              "ParentId": 2000,
+              "Name": "Specialized",
+              "ProductCount": 24413,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2001,
+          "ParentId": 20,
+          "Name": "Banana and Tip Connectors",
+          "ProductCount": 2381,
+          "Children": [
+            {
+              "CategoryId": 351,
+              "ParentId": 2001,
+              "Name": "Banana and Tip Connector Accessories",
+              "ProductCount": 62,
+              "Children": []
+            },
+            {
+              "CategoryId": 381,
+              "ParentId": 2001,
+              "Name": "Banana and Tip Connector Adapters",
+              "ProductCount": 80,
+              "Children": []
+            },
+            {
+              "CategoryId": 310,
+              "ParentId": 2001,
+              "Name": "Binding Posts",
+              "ProductCount": 370,
+              "Children": []
+            },
+            {
+              "CategoryId": 302,
+              "ParentId": 2001,
+              "Name": "Jacks, Plugs",
+              "ProductCount": 1869,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2002,
+          "ParentId": 20,
+          "Name": "Barrel Connectors",
+          "ProductCount": 4170,
+          "Children": [
+            {
+              "CategoryId": 434,
+              "ParentId": 2002,
+              "Name": "Audio Connectors",
+              "ProductCount": 2600,
+              "Children": []
+            },
+            {
+              "CategoryId": 348,
+              "ParentId": 2002,
+              "Name": "Barrel Connector Accessories",
+              "ProductCount": 162,
+              "Children": []
+            },
+            {
+              "CategoryId": 376,
+              "ParentId": 2002,
+              "Name": "Barrel Connector Adapters",
+              "ProductCount": 222,
+              "Children": []
+            },
+            {
+              "CategoryId": 435,
+              "ParentId": 2002,
+              "Name": "Power Connectors",
+              "ProductCount": 1186,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 373,
+          "ParentId": 20,
+          "Name": "Between Series Adapters",
+          "ProductCount": 893,
+          "Children": []
+        },
+        {
+          "CategoryId": 2003,
+          "ParentId": 20,
+          "Name": "Blade Type Power Connectors",
+          "ProductCount": 4458,
+          "Children": [
+            {
+              "CategoryId": 360,
+              "ParentId": 2003,
+              "Name": "Blade Type Power Connector Accessories",
+              "ProductCount": 609,
+              "Children": []
+            },
+            {
+              "CategoryId": 357,
+              "ParentId": 2003,
+              "Name": "Blade Type Power Connector Assemblies",
+              "ProductCount": 2680,
+              "Children": []
+            },
+            {
+              "CategoryId": 420,
+              "ParentId": 2003,
+              "Name": "Blade Type Power Connector Contacts",
+              "ProductCount": 368,
+              "Children": []
+            },
+            {
+              "CategoryId": 419,
+              "ParentId": 2003,
+              "Name": "Blade Type Power Connector Housings",
+              "ProductCount": 801,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2004,
+          "ParentId": 20,
+          "Name": "Card Edge Connectors",
+          "ProductCount": 619287,
+          "Children": [
+            {
+              "CategoryId": 349,
+              "ParentId": 2004,
+              "Name": "Card Edge Connector Accessories",
+              "ProductCount": 177,
+              "Children": []
+            },
+            {
+              "CategoryId": 429,
+              "ParentId": 2004,
+              "Name": "Card Edge Connector Adapters",
+              "ProductCount": 70,
+              "Children": []
+            },
+            {
+              "CategoryId": 345,
+              "ParentId": 2004,
+              "Name": "Card Edge Connector Contacts",
+              "ProductCount": 139,
+              "Children": []
+            },
+            {
+              "CategoryId": 354,
+              "ParentId": 2004,
+              "Name": "Card Edge Connector Housings",
+              "ProductCount": 245,
+              "Children": []
+            },
+            {
+              "CategoryId": 303,
+              "ParentId": 2004,
+              "Name": "Edgeboard Connectors",
+              "ProductCount": 618656,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2005,
+          "ParentId": 20,
+          "Name": "Circular Connectors",
+          "ProductCount": 3295456,
+          "Children": [
+            {
+              "CategoryId": 313,
+              "ParentId": 2005,
+              "Name": "Backshells and Cable Clamps",
+              "ProductCount": 67205,
+              "Children": []
+            },
+            {
+              "CategoryId": 329,
+              "ParentId": 2005,
+              "Name": "Circular Connector Accessories",
+              "ProductCount": 69846,
+              "Children": []
+            },
+            {
+              "CategoryId": 378,
+              "ParentId": 2005,
+              "Name": "Circular Connector Adapters",
+              "ProductCount": 47919,
+              "Children": []
+            },
+            {
+              "CategoryId": 436,
+              "ParentId": 2005,
+              "Name": "Circular Connector Assemblies",
+              "ProductCount": 2423454,
+              "Children": []
+            },
+            {
+              "CategoryId": 330,
+              "ParentId": 2005,
+              "Name": "Circular Connector Contacts",
+              "ProductCount": 7016,
+              "Children": []
+            },
+            {
+              "CategoryId": 320,
+              "ParentId": 2005,
+              "Name": "Circular Connector Housings",
+              "ProductCount": 680016,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2007,
+          "ParentId": 20,
+          "Name": "Coaxial Connectors (RF)",
+          "ProductCount": 44627,
+          "Children": [
+            {
+              "CategoryId": 342,
+              "ParentId": 2007,
+              "Name": "Coaxial Connector (RF) Accessories",
+              "ProductCount": 2600,
+              "Children": []
+            },
+            {
+              "CategoryId": 374,
+              "ParentId": 2007,
+              "Name": "Coaxial Connector (RF) Adapters",
+              "ProductCount": 9386,
+              "Children": []
+            },
+            {
+              "CategoryId": 437,
+              "ParentId": 2007,
+              "Name": "Coaxial Connector (RF) Assemblies",
+              "ProductCount": 30456,
+              "Children": []
+            },
+            {
+              "CategoryId": 388,
+              "ParentId": 2007,
+              "Name": "Coaxial Connector (RF) Contacts",
+              "ProductCount": 397,
+              "Children": []
+            },
+            {
+              "CategoryId": 382,
+              "ParentId": 2007,
+              "Name": "Coaxial Connector (RF) Terminators",
+              "ProductCount": 1788,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2008,
+          "ParentId": 20,
+          "Name": "Contacts",
+          "ProductCount": 4476,
+          "Children": [
+            {
+              "CategoryId": 311,
+              "ParentId": 2008,
+              "Name": "Contacts, Spring Loaded (Pogo Pins), and Pressure",
+              "ProductCount": 707,
+              "Children": []
+            },
+            {
+              "CategoryId": 416,
+              "ParentId": 2008,
+              "Name": "Leadframe",
+              "ProductCount": 61,
+              "Children": []
+            },
+            {
+              "CategoryId": 336,
+              "ParentId": 2008,
+              "Name": "Multi Purpose",
+              "ProductCount": 3708,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2011,
+          "ParentId": 20,
+          "Name": "D-Sub, D-Shaped Connectors",
+          "ProductCount": 320733,
+          "Children": [
+            {
+              "CategoryId": 438,
+              "ParentId": 2011,
+              "Name": "Centronics Connectors",
+              "ProductCount": 2604,
+              "Children": []
+            },
+            {
+              "CategoryId": 439,
+              "ParentId": 2011,
+              "Name": "D-Sub Connector Assemblies",
+              "ProductCount": 265808,
+              "Children": []
+            },
+            {
+              "CategoryId": 339,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Accessories",
+              "ProductCount": 2977,
+              "Children": []
+            },
+            {
+              "CategoryId": 375,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Adapters",
+              "ProductCount": 1474,
+              "Children": []
+            },
+            {
+              "CategoryId": 355,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Backshells, Hoods",
+              "ProductCount": 8599,
+              "Children": []
+            },
+            {
+              "CategoryId": 332,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Contacts",
+              "ProductCount": 2002,
+              "Children": []
+            },
+            {
+              "CategoryId": 321,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Housings",
+              "ProductCount": 35522,
+              "Children": []
+            },
+            {
+              "CategoryId": 447,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Jackscrews",
+              "ProductCount": 1716,
+              "Children": []
+            },
+            {
+              "CategoryId": 383,
+              "ParentId": 2011,
+              "Name": "D-Sub, D-Shaped Connector Terminators",
+              "ProductCount": 31,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2013,
+          "ParentId": 20,
+          "Name": "FFC, FPC (Flat Flexible) Connectors",
+          "ProductCount": 17106,
+          "Children": [
+            {
+              "CategoryId": 350,
+              "ParentId": 2013,
+              "Name": "FFC, FPC (Flat Flexible) Connector Accessories",
+              "ProductCount": 63,
+              "Children": []
+            },
+            {
+              "CategoryId": 399,
+              "ParentId": 2013,
+              "Name": "FFC, FPC (Flat Flexible) Connector Assemblies",
+              "ProductCount": 16573,
+              "Children": []
+            },
+            {
+              "CategoryId": 344,
+              "ParentId": 2013,
+              "Name": "FFC, FPC (Flat Flexible) Connector Contacts",
+              "ProductCount": 116,
+              "Children": []
+            },
+            {
+              "CategoryId": 390,
+              "ParentId": 2013,
+              "Name": "FFC, FPC (Flat Flexible) Connector Housings",
+              "ProductCount": 354,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2014,
+          "ParentId": 20,
+          "Name": "Fiber Optic Connectors",
+          "ProductCount": 6028,
+          "Children": [
+            {
+              "CategoryId": 389,
+              "ParentId": 2014,
+              "Name": "Fiber Optic Connector Accessories",
+              "ProductCount": 652,
+              "Children": []
+            },
+            {
+              "CategoryId": 387,
+              "ParentId": 2014,
+              "Name": "Fiber Optic Connector Adapters",
+              "ProductCount": 3110,
+              "Children": []
+            },
+            {
+              "CategoryId": 440,
+              "ParentId": 2014,
+              "Name": "Fiber Optic Connector Assemblies",
+              "ProductCount": 1968,
+              "Children": []
+            },
+            {
+              "CategoryId": 445,
+              "ParentId": 2014,
+              "Name": "Fiber Optic Connector Housings",
+              "ProductCount": 298,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2015,
+          "ParentId": 20,
+          "Name": "Heavy Duty Connectors",
+          "ProductCount": 23559,
+          "Children": [
+            {
+              "CategoryId": 358,
+              "ParentId": 2015,
+              "Name": "Heavy Duty Connector Accessories",
+              "ProductCount": 3569,
+              "Children": []
+            },
+            {
+              "CategoryId": 327,
+              "ParentId": 2015,
+              "Name": "Heavy Duty Connector Assemblies",
+              "ProductCount": 986,
+              "Children": []
+            },
+            {
+              "CategoryId": 337,
+              "ParentId": 2015,
+              "Name": "Heavy Duty Connector Contacts",
+              "ProductCount": 1850,
+              "Children": []
+            },
+            {
+              "CategoryId": 362,
+              "ParentId": 2015,
+              "Name": "Heavy Duty Connector Frames",
+              "ProductCount": 534,
+              "Children": []
+            },
+            {
+              "CategoryId": 363,
+              "ParentId": 2015,
+              "Name": "Heavy Duty Connector Housings, Hoods, Bases",
+              "ProductCount": 12597,
+              "Children": []
+            },
+            {
+              "CategoryId": 361,
+              "ParentId": 2015,
+              "Name": "Heavy Duty Connector Inserts, Modules",
+              "ProductCount": 4023,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2017,
+          "ParentId": 20,
+          "Name": "Keystone Connectors",
+          "ProductCount": 3681,
+          "Children": [
+            {
+              "CategoryId": 426,
+              "ParentId": 2017,
+              "Name": "Keystone Connector Accessories",
+              "ProductCount": 355,
+              "Children": []
+            },
+            {
+              "CategoryId": 427,
+              "ParentId": 2017,
+              "Name": "Keystone Faceplates, Frames",
+              "ProductCount": 1458,
+              "Children": []
+            },
+            {
+              "CategoryId": 428,
+              "ParentId": 2017,
+              "Name": "Keystone Inserts",
+              "ProductCount": 1868,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 441,
+          "ParentId": 20,
+          "Name": "LGH Connectors",
+          "ProductCount": 333,
+          "Children": []
+        },
+        {
+          "CategoryId": 2021,
+          "ParentId": 20,
+          "Name": "Memory Connectors",
+          "ProductCount": 3384,
+          "Children": [
+            {
+              "CategoryId": 413,
+              "ParentId": 2021,
+              "Name": "Inline Module Sockets",
+              "ProductCount": 1396,
+              "Children": []
+            },
+            {
+              "CategoryId": 352,
+              "ParentId": 2021,
+              "Name": "Memory Connector Accessories",
+              "ProductCount": 132,
+              "Children": []
+            },
+            {
+              "CategoryId": 414,
+              "ParentId": 2021,
+              "Name": "PC Card Sockets",
+              "ProductCount": 1837,
+              "Children": []
+            },
+            {
+              "CategoryId": 421,
+              "ParentId": 2021,
+              "Name": "PC Cards - Adapters",
+              "ProductCount": 19,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2022,
+          "ParentId": 20,
+          "Name": "Modular/Ethernet Connectors",
+          "ProductCount": 21540,
+          "Children": [
+            {
+              "CategoryId": 366,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector (RJ45, RJ11) Jacks",
+              "ProductCount": 11162,
+              "Children": []
+            },
+            {
+              "CategoryId": 367,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector (RJ45, RJ11) Plugs",
+              "ProductCount": 1657,
+              "Children": []
+            },
+            {
+              "CategoryId": 365,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector (RJ45) Jacks With Magnetics",
+              "ProductCount": 6074,
+              "Children": []
+            },
+            {
+              "CategoryId": 442,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector Accessories",
+              "ProductCount": 1157,
+              "Children": []
+            },
+            {
+              "CategoryId": 379,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector Adapters",
+              "ProductCount": 1238,
+              "Children": []
+            },
+            {
+              "CategoryId": 403,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector Plug Housings",
+              "ProductCount": 166,
+              "Children": []
+            },
+            {
+              "CategoryId": 418,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector Wiring Blocks",
+              "ProductCount": 64,
+              "Children": []
+            },
+            {
+              "CategoryId": 417,
+              "ParentId": 2022,
+              "Name": "Modular/Ethernet Connector Wiring Blocks Accessories",
+              "ProductCount": 22,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2023,
+          "ParentId": 20,
+          "Name": "Photovoltaic (Solar Panel) Connectors",
+          "ProductCount": 596,
+          "Children": [
+            {
+              "CategoryId": 424,
+              "ParentId": 2023,
+              "Name": "Photovoltaic (Solar Panel) Connector Accessories",
+              "ProductCount": 96,
+              "Children": []
+            },
+            {
+              "CategoryId": 326,
+              "ParentId": 2023,
+              "Name": "Photovoltaic (Solar Panel) Connector Assemblies",
+              "ProductCount": 428,
+              "Children": []
+            },
+            {
+              "CategoryId": 423,
+              "ParentId": 2023,
+              "Name": "Photovoltaic (Solar Panel) Connector Contacts",
+              "ProductCount": 72,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2024,
+          "ParentId": 20,
+          "Name": "Pluggable Connectors",
+          "ProductCount": 6220,
+          "Children": [
+            {
+              "CategoryId": 346,
+              "ParentId": 2024,
+              "Name": "Pluggable Connector Accessories",
+              "ProductCount": 505,
+              "Children": []
+            },
+            {
+              "CategoryId": 443,
+              "ParentId": 2024,
+              "Name": "Pluggable Connector Assemblies",
+              "ProductCount": 5715,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2027,
+          "ParentId": 20,
+          "Name": "Rectangular Connectors",
+          "ProductCount": 926639,
+          "Children": [
+            {
+              "CategoryId": 308,
+              "ParentId": 2027,
+              "Name": "Arrays, Edge Type, Mezzanine (Board to Board)",
+              "ProductCount": 31677,
+              "Children": []
+            },
+            {
+              "CategoryId": 317,
+              "ParentId": 2027,
+              "Name": "Board In, Direct Wire to Board",
+              "ProductCount": 2028,
+              "Children": []
+            },
+            {
+              "CategoryId": 400,
+              "ParentId": 2027,
+              "Name": "Board Spacers, Stackers (Board to Board)",
+              "ProductCount": 296420,
+              "Children": []
+            },
+            {
+              "CategoryId": 316,
+              "ParentId": 2027,
+              "Name": "Free Hanging, Panel Mount",
+              "ProductCount": 21532,
+              "Children": []
+            },
+            {
+              "CategoryId": 314,
+              "ParentId": 2027,
+              "Name": "Headers, Male Pins",
+              "ProductCount": 331139,
+              "Children": []
+            },
+            {
+              "CategoryId": 315,
+              "ParentId": 2027,
+              "Name": "Headers, Receptacles, Female Sockets",
+              "ProductCount": 172477,
+              "Children": []
+            },
+            {
+              "CategoryId": 318,
+              "ParentId": 2027,
+              "Name": "Headers, Specialty Pin",
+              "ProductCount": 8219,
+              "Children": []
+            },
+            {
+              "CategoryId": 340,
+              "ParentId": 2027,
+              "Name": "Rectangular Connector Accessories",
+              "ProductCount": 8304,
+              "Children": []
+            },
+            {
+              "CategoryId": 380,
+              "ParentId": 2027,
+              "Name": "Rectangular Connector Adapters",
+              "ProductCount": 389,
+              "Children": []
+            },
+            {
+              "CategoryId": 331,
+              "ParentId": 2027,
+              "Name": "Rectangular Connector Contacts",
+              "ProductCount": 8165,
+              "Children": []
+            },
+            {
+              "CategoryId": 319,
+              "ParentId": 2027,
+              "Name": "Rectangular Connector Housings",
+              "ProductCount": 34790,
+              "Children": []
+            },
+            {
+              "CategoryId": 408,
+              "ParentId": 2027,
+              "Name": "Spring Loaded",
+              "ProductCount": 11499,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 304,
+          "ParentId": 20,
+          "Name": "Shunts, Jumpers",
+          "ProductCount": 1188,
+          "Children": []
+        },
+        {
+          "CategoryId": 2028,
+          "ParentId": 20,
+          "Name": "Sockets for ICs, Transistors",
+          "ProductCount": 15980,
+          "Children": [
+            {
+              "CategoryId": 409,
+              "ParentId": 2028,
+              "Name": "IC Sockets",
+              "ProductCount": 15574,
+              "Children": []
+            },
+            {
+              "CategoryId": 410,
+              "ParentId": 2028,
+              "Name": "Socket Accessories",
+              "ProductCount": 167,
+              "Children": []
+            },
+            {
+              "CategoryId": 411,
+              "ParentId": 2028,
+              "Name": "Socket Adapters",
+              "ProductCount": 239,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2029,
+          "ParentId": 20,
+          "Name": "Solid State Lighting Connectors",
+          "ProductCount": 1874,
+          "Children": [
+            {
+              "CategoryId": 432,
+              "ParentId": 2029,
+              "Name": "Solid State Lighting Connector Accessories",
+              "ProductCount": 283,
+              "Children": []
+            },
+            {
+              "CategoryId": 444,
+              "ParentId": 2029,
+              "Name": "Solid State Lighting Connector Assemblies",
+              "ProductCount": 1365,
+              "Children": []
+            },
+            {
+              "CategoryId": 446,
+              "ParentId": 2029,
+              "Name": "Solid State Lighting Connector Contacts",
+              "ProductCount": 226,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2030,
+          "ParentId": 20,
+          "Name": "Terminal Blocks",
+          "ProductCount": 228941,
+          "Children": [
+            {
+              "CategoryId": 368,
+              "ParentId": 2030,
+              "Name": "Barrier Blocks",
+              "ProductCount": 40860,
+              "Children": []
+            },
+            {
+              "CategoryId": 369,
+              "ParentId": 2030,
+              "Name": "Din Rail, Channel",
+              "ProductCount": 11441,
+              "Children": []
+            },
+            {
+              "CategoryId": 370,
+              "ParentId": 2030,
+              "Name": "Headers, Plugs and Sockets",
+              "ProductCount": 87620,
+              "Children": []
+            },
+            {
+              "CategoryId": 431,
+              "ParentId": 2030,
+              "Name": "Interface Modules",
+              "ProductCount": 1622,
+              "Children": []
+            },
+            {
+              "CategoryId": 425,
+              "ParentId": 2030,
+              "Name": "Panel Mount",
+              "ProductCount": 1368,
+              "Children": []
+            },
+            {
+              "CategoryId": 412,
+              "ParentId": 2030,
+              "Name": "Power Distribution",
+              "ProductCount": 1672,
+              "Children": []
+            },
+            {
+              "CategoryId": 433,
+              "ParentId": 2030,
+              "Name": "Specialized",
+              "ProductCount": 3919,
+              "Children": []
+            },
+            {
+              "CategoryId": 2033,
+              "ParentId": 2030,
+              "Name": "Terminal Block Accessories",
+              "ProductCount": 23524,
+              "Children": [
+                {
+                  "CategoryId": 309,
+                  "ParentId": 2033,
+                  "Name": "Accessories",
+                  "ProductCount": 8451,
+                  "Children": []
+                },
+                {
+                  "CategoryId": 385,
+                  "ParentId": 2033,
+                  "Name": "Terminal Block Jumpers",
+                  "ProductCount": 3734,
+                  "Children": []
+                },
+                {
+                  "CategoryId": 384,
+                  "ParentId": 2033,
+                  "Name": "Terminal Block Marker Strips",
+                  "ProductCount": 8430,
+                  "Children": []
+                },
+                {
+                  "CategoryId": 364,
+                  "ParentId": 2033,
+                  "Name": "Terminal Block Wire Ferrules",
+                  "ProductCount": 2909,
+                  "Children": []
+                }
+              ]
+            },
+            {
+              "CategoryId": 322,
+              "ParentId": 2030,
+              "Name": "Terminal Block Adapters",
+              "ProductCount": 645,
+              "Children": []
+            },
+            {
+              "CategoryId": 338,
+              "ParentId": 2030,
+              "Name": "Terminal Block Contacts",
+              "ProductCount": 69,
+              "Children": []
+            },
+            {
+              "CategoryId": 371,
+              "ParentId": 2030,
+              "Name": "Wire to Board",
+              "ProductCount": 56201,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 422,
+          "ParentId": 20,
+          "Name": "Terminal Junction Systems",
+          "ProductCount": 3222,
+          "Children": []
+        },
+        {
+          "CategoryId": 306,
+          "ParentId": 20,
+          "Name": "Terminal Strips and Turret Boards",
+          "ProductCount": 491,
+          "Children": []
+        },
+        {
+          "CategoryId": 2031,
+          "ParentId": 20,
+          "Name": "Terminals",
+          "ProductCount": 47070,
+          "Children": [
+            {
+              "CategoryId": 393,
+              "ParentId": 2031,
+              "Name": "Barrel, Bullet Connectors",
+              "ProductCount": 462,
+              "Children": []
+            },
+            {
+              "CategoryId": 402,
+              "ParentId": 2031,
+              "Name": "Foil Connectors",
+              "ProductCount": 33,
+              "Children": []
+            },
+            {
+              "CategoryId": 325,
+              "ParentId": 2031,
+              "Name": "Housings, Boots",
+              "ProductCount": 1800,
+              "Children": []
+            },
+            {
+              "CategoryId": 404,
+              "ParentId": 2031,
+              "Name": "Knife Connectors",
+              "ProductCount": 59,
+              "Children": []
+            },
+            {
+              "CategoryId": 395,
+              "ParentId": 2031,
+              "Name": "Lugs",
+              "ProductCount": 6695,
+              "Children": []
+            },
+            {
+              "CategoryId": 353,
+              "ParentId": 2031,
+              "Name": "Magnetic Wire Connectors",
+              "ProductCount": 899,
+              "Children": []
+            },
+            {
+              "CategoryId": 324,
+              "ParentId": 2031,
+              "Name": "PC Pin Receptacles, Socket Connectors",
+              "ProductCount": 5531,
+              "Children": []
+            },
+            {
+              "CategoryId": 323,
+              "ParentId": 2031,
+              "Name": "PC Pin, Single Post Connectors",
+              "ProductCount": 2817,
+              "Children": []
+            },
+            {
+              "CategoryId": 392,
+              "ParentId": 2031,
+              "Name": "Quick Connects, Quick Disconnect Connectors",
+              "ProductCount": 5939,
+              "Children": []
+            },
+            {
+              "CategoryId": 394,
+              "ParentId": 2031,
+              "Name": "Ring Connectors",
+              "ProductCount": 8862,
+              "Children": []
+            },
+            {
+              "CategoryId": 396,
+              "ParentId": 2031,
+              "Name": "Screw Connectors",
+              "ProductCount": 882,
+              "Children": []
+            },
+            {
+              "CategoryId": 401,
+              "ParentId": 2031,
+              "Name": "Solder Lug Connectors",
+              "ProductCount": 72,
+              "Children": []
+            },
+            {
+              "CategoryId": 391,
+              "ParentId": 2031,
+              "Name": "Spade Connectors",
+              "ProductCount": 3208,
+              "Children": []
+            },
+            {
+              "CategoryId": 356,
+              "ParentId": 2031,
+              "Name": "Specialized Connectors",
+              "ProductCount": 3416,
+              "Children": []
+            },
+            {
+              "CategoryId": 415,
+              "ParentId": 2031,
+              "Name": "Terminal Accessories",
+              "ProductCount": 417,
+              "Children": []
+            },
+            {
+              "CategoryId": 405,
+              "ParentId": 2031,
+              "Name": "Terminal Adapters",
+              "ProductCount": 100,
+              "Children": []
+            },
+            {
+              "CategoryId": 328,
+              "ParentId": 2031,
+              "Name": "Turret Connectors",
+              "ProductCount": 857,
+              "Children": []
+            },
+            {
+              "CategoryId": 397,
+              "ParentId": 2031,
+              "Name": "Wire Pin Connectors",
+              "ProductCount": 318,
+              "Children": []
+            },
+            {
+              "CategoryId": 305,
+              "ParentId": 2031,
+              "Name": "Wire Splice Connectors",
+              "ProductCount": 4519,
+              "Children": []
+            },
+            {
+              "CategoryId": 398,
+              "ParentId": 2031,
+              "Name": "Wire to Board Connectors",
+              "ProductCount": 184,
+              "Children": []
+            }
+          ]
+        },
+        {
+          "CategoryId": 2032,
+          "ParentId": 20,
+          "Name": "USB, DVI, HDMI Connectors",
+          "ProductCount": 6211,
+          "Children": [
+            {
+              "CategoryId": 347,
+              "ParentId": 2032,
+              "Name": "USB, DVI, HDMI Connector Accessories",
+              "ProductCount": 349,
+              "Children": []
+            },
+            {
+              "CategoryId": 377,
+              "ParentId": 2032,
+              "Name": "USB, DVI, HDMI Connector Adapters",
+              "ProductCount": 1017,
+              "Children": []
+            },
+            {
+              "CategoryId": 312,
+              "ParentId": 2032,
+              "Name": "USB, DVI, HDMI Connector Assemblies",
+              "ProductCount": 4845,
+              "Children": []
+            }
+          ]
+        }
+      ]
+    },
+    "SearchLocaleUsed": {
+      "Site": "US",
+      "Language": "en",
+      "Currency": "USD"
+    }
+  }
+}

@@ -1,9 +1,12 @@
 import os
+import re
 import json
+import difflib
 import logging
 from fastmcp import FastMCP
 from dotenv import load_dotenv
 import requests
+import pint
 
 # Configure logging
 logging.basicConfig(
@@ -16,7 +19,10 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-USE_SANDBOX = os.getenv("USE_SANDBOX", "true").lower() == "false"
+USE_SANDBOX = os.getenv("USE_SANDBOX", "false").lower() in ("true", "1", "yes")
+# Offline mode: skip OAuth at import. Tests set this to use captured fixtures via a
+# patched _make_request; nothing else in the module should hit the network.
+OFFLINE_MODE = os.getenv("DIGIKEY_OFFLINE_MODE", "false").lower() in ("true", "1", "yes")
 
 # DigiKey OAuth2 token endpoint
 if USE_SANDBOX:
@@ -55,7 +61,17 @@ def get_access_token():
 
 # Get access token at startup
 logger.info("=== STARTING DIGIKEY MCP SERVER ===")
-access_token = get_access_token()
+if USE_SANDBOX:
+    logger.warning(
+        "USE_SANDBOX=true — DigiKey's sandbox Product Search returns the same canned "
+        "example product regardless of the query. Use it for connectivity testing only; "
+        "switch to production to validate actual search behavior."
+    )
+if OFFLINE_MODE:
+    logger.info("DIGIKEY_OFFLINE_MODE=1 — skipping OAuth; HTTP calls must be intercepted by the caller.")
+    access_token = "offline-mode-no-token"
+else:
+    access_token = get_access_token()
 logger.info("=== SERVER READY ===")
 
 def _get_headers(customer_id: str = "0"):
@@ -89,42 +105,736 @@ def _make_request(method: str, url: str, headers: dict, data: dict = None) -> di
     
     return resp.json()
 
+_CATEGORY_NAME_CACHE: dict = {}
+
+
+def _get_category_name(category_id) -> str:
+    """Resolve a DigiKey category id to its leaf-category name (e.g. 58 → 'Aluminum Electrolytic Capacitors').
+
+    Cached per-process. Used to seed `Keywords` for category-scoped searches: the DigiKey v4
+    API requires a non-trivial Keywords value, and using the category's own name as the keyword
+    is what makes CategoryFilter actually return the full category set with rich facets.
+    """
+    key = str(category_id)
+    if key in _CATEGORY_NAME_CACHE:
+        return _CATEGORY_NAME_CACHE[key]
+
+    raw = _make_request("GET", f"{API_BASE}/products/v4/search/categories/{key}", _get_headers())
+
+    def _walk(node):
+        if str(node.get("CategoryId")) == key:
+            return node.get("Name")
+        for c in node.get("Children") or []:
+            r = _walk(c)
+            if r:
+                return r
+        return None
+
+    name = _walk(raw.get("Category") or {})
+    if not name:
+        raise ValueError(f"Category id {category_id!r} not found in DigiKey category tree.")
+    _CATEGORY_NAME_CACHE[key] = name
+    return name
+
+
+def _build_parameter_filter_request(category_id: str, parameter_filters: dict) -> dict:
+    """Build a ParameterFilterRequest body from {parameter_id: [value_id, ...]}."""
+    if not category_id:
+        raise ValueError("category_id is required when parameter_filters is set")
+
+    parameter_filter_list = []
+    for param_id, value_ids in parameter_filters.items():
+        if isinstance(value_ids, (str, int)):
+            value_ids = [value_ids]
+        parameter_filter_list.append({
+            "ParameterId": int(param_id),
+            "FilterValues": [{"Id": str(v)} for v in value_ids],
+        })
+
+    return {
+        "CategoryFilter": {"Id": str(category_id)},
+        "ParameterFilters": parameter_filter_list,
+    }
+
+
+def _do_keyword_search(keywords: str, limit: int = 5, manufacturer_id: str = None, category_id: str = None, search_options: str = None, sort_field: str = None, sort_order: str = "Ascending", parameter_filters: dict = None, use_category_as_keyword: bool = False):
+    """Internal: POST /search/keyword with optional parametric filtering. Not exposed as a tool.
+
+    DigiKey rejects empty Keywords with a 400, and treats "*" as a literal — neither gives a
+    full category browse. Set use_category_as_keyword=True (find_components does this) to seed
+    Keywords with the category's own name, which is the only known way to get a complete
+    category-scoped result set with rich parametric facets.
+
+    Filter fields are nested under FilterOptionsRequest per the v4 spec; putting them at the
+    top level causes the API to silently ignore them.
+    """
+    url = f"{API_BASE}/products/v4/search/keyword"
+    headers = _get_headers()
+
+    if not keywords and use_category_as_keyword and category_id:
+        keywords = _get_category_name(category_id)
+
+    body = {
+        "Keywords": keywords or "*",
+        "Limit": limit,
+    }
+
+    filter_options = {}
+    if category_id:
+        filter_options["CategoryFilter"] = [{"Id": str(category_id)}]
+    if manufacturer_id:
+        filter_options["ManufacturerFilter"] = [{"Id": str(manufacturer_id)}]
+    if search_options:
+        filter_options["SearchOptions"] = [s.strip() for s in search_options.split(",") if s.strip()]
+    if parameter_filters:
+        filter_options["ParameterFilterRequest"] = _build_parameter_filter_request(category_id, parameter_filters)
+
+    if filter_options:
+        body["FilterOptionsRequest"] = filter_options
+
+    if sort_field:
+        body["SortOptions"] = {
+            "Field": sort_field,
+            "SortOrder": sort_order,
+        }
+
+    return _make_request("POST", url, headers, body)
+
+
 @mcp.tool()
 def keyword_search(keywords: str, limit: int = 5, manufacturer_id: str = None, category_id: str = None, search_options: str = None, sort_field: str = None, sort_order: str = "Ascending"):
-    """Search DigiKey products by keyword.
-    
+    """Free-text search of DigiKey products by keyword or part number.
+
+    For attribute-based queries (capacitance, diameter, etc.), use find_components instead.
+
     Args:
         keywords: Search terms or part numbers
         limit: Maximum number of results (default: 5)
         manufacturer_id: Filter by specific manufacturer ID
-        category_id: Filter by specific category ID  
-        search_options: Comma-delimited filters like LeadFree,RoHSCompliant,InStock
+        category_id: Filter by specific category ID
+        search_options: Comma-delimited values from the v4 SearchOptions enum. Valid values:
+            ChipOutpost, Has3DModel, HasCadModel, HasDatasheet, HasProductPhoto, InStock,
+            NewProduct, NonRohsCompliant, NormallyStocking, RohsCompliant. Note case
+            (RohsCompliant, not RoHSCompliant) — DigiKey ignores unknown values silently.
         sort_field: Field to sort by. Options: None, Packaging, ProductStatus, DigiKeyProductNumber, ManufacturerProductNumber, Manufacturer, MinimumQuantity, QuantityAvailable, Price, Supplier, PriceManufacturerStandardPackage
         sort_order: Sort direction - Ascending or Descending (default: Ascending)
     """
+    # Empty Keywords would silently fall through to the "*" placeholder downstream — which
+    # DigiKey treats as a literal-character match (yielding a tiny, near-meaningless result
+    # set), not as "give me everything". Surface the problem instead.
+    if not keywords or not keywords.strip():
+        raise ValueError(
+            "keywords must be a non-empty string. "
+            "For attribute-based search use find_components; for a category browse use "
+            "find_components(category_id, ...) with no keyword."
+        )
+    return _do_keyword_search(
+        keywords=keywords,
+        limit=limit,
+        manufacturer_id=manufacturer_id,
+        category_id=category_id,
+        search_options=search_options,
+        sort_field=sort_field,
+        sort_order=sort_order,
+    )
+
+
+def _get_parametric_filters(category_id: str, keywords: str = "", limit: int = 1):
+    """Internal: fetch parametric filter options for a category. Not exposed as a tool.
+
+    Uses the category's own name as Keywords when no override is supplied — this is what
+    makes DigiKey return the full facet histogram for the category. Passing 'Keywords="*"'
+    or an empty string yields a sparse 1-3-value histogram because DigiKey treats them as
+    literal keyword matches, not wildcards.
+    """
     url = f"{API_BASE}/products/v4/search/keyword"
     headers = _get_headers()
-    
     body = {
-        "Keywords": keywords,
-        "Limit": limit
+        "Keywords": keywords or _get_category_name(category_id),
+        "Limit": limit,
+        "FilterOptionsRequest": {
+            "CategoryFilter": [{"Id": str(category_id)}],
+        },
     }
-    
-    if manufacturer_id:
-        body["ManufacturerId"] = manufacturer_id
-    if category_id:
-        body["CategoryId"] = category_id
-    if search_options:
-        body["SearchOptionList"] = search_options.split(",")
-    
-    # Add sort options if specified
-    if sort_field:
-        body["SortOptions"] = {
-            "Field": sort_field,
-            "SortOrder": sort_order
+    raw = _make_request("POST", url, headers, body)
+
+    parametric = (raw.get("FilterOptions") or {}).get("ParametricFilters") or []
+    return [
+        {
+            "ParameterId": p.get("ParameterId"),
+            "ParameterName": p.get("ParameterName"),
+            "ParameterType": p.get("ParameterType"),
+            "FilterValues": [
+                {
+                    "ValueId": v.get("ValueId"),
+                    "ValueName": v.get("ValueName"),
+                    "ProductCount": v.get("ProductCount"),
+                    "RangeFilterType": v.get("RangeFilterType"),
+                }
+                for v in (p.get("FilterValues") or [])
+            ],
         }
-    
-    return _make_request("POST", url, headers, body)
+        for p in parametric
+    ]
+
+
+@mcp.tool()
+def get_parametric_filters(
+    category_id: str,
+    parameter_name: str = None,
+    max_values: int = 100,
+    keywords: str = "",
+):
+    """Discover the parametric filters available for a category.
+
+    By default returns a SUMMARY — one entry per parameter with its name, type, total value
+    count, and three sample values. To get the actual ValueIds/ValueNames for one parameter,
+    call again with `parameter_name="Capacitance"` (fuzzy-matched).
+
+    Args:
+        category_id: The DigiKey category to inspect.
+        parameter_name: If set, return FilterValues for this parameter only.
+        max_values: Max FilterValues to return (top by ProductCount). Default 100.
+            Set to 0 for unlimited.
+        keywords: Optional override for the keyword that scopes the facet histogram. When
+            empty (default) the category's own name is used.
+
+    Returns:
+        Summary form (default):
+            [{ParameterName, ParameterType, TotalCount, SampleValues: [...]}]
+        Per-parameter form (when parameter_name is set):
+            {ParameterId, ParameterName, ParameterType, TotalCount, Truncated, FilterValues: [...]}
+    """
+    filters = _get_parametric_filters(category_id=category_id, keywords=keywords)
+
+    if parameter_name:
+        param = _match_parameter(parameter_name, filters)
+        all_values = param.get("FilterValues") or []
+        ranked = sorted(all_values, key=lambda v: -(v.get("ProductCount") or 0))
+        truncated = max_values > 0 and len(ranked) > max_values
+        values = ranked[:max_values] if max_values > 0 else ranked
+        return {
+            "ParameterId": param.get("ParameterId"),
+            "ParameterName": param.get("ParameterName"),
+            "ParameterType": param.get("ParameterType"),
+            "TotalCount": len(all_values),
+            "Truncated": truncated,
+            "FilterValues": values,
+        }
+
+    return [
+        {
+            "ParameterName": p.get("ParameterName"),
+            "ParameterType": p.get("ParameterType"),
+            "TotalCount": len(p.get("FilterValues") or []),
+            "SampleValues": [
+                v.get("ValueName")
+                for v in sorted(
+                    p.get("FilterValues") or [],
+                    key=lambda v: -(v.get("ProductCount") or 0),
+                )[:3]
+            ],
+        }
+        for p in filters
+    ]
+
+
+def _normalize_text(s) -> str:
+    """Normalize for fuzzy matching: lowercase, collapse whitespace, fold micro signs."""
+    if s is None:
+        return ""
+    s = str(s).lower().strip()
+    s = s.replace("µ", "u").replace("μ", "u")
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+
+def _suggest_close_names(target: str, names: list, n: int = 5) -> list:
+    """Top-n names by edit-distance similarity to target. Falls back to the first n
+    sorted names when nothing scores above the cutoff."""
+    matches = difflib.get_close_matches(str(target), [n for n in names if n], n=n, cutoff=0.5)
+    return matches or sorted(n for n in names if n)[:n]
+
+
+def _suggest_close_values(target, available_values: list, n: int = 5) -> list:
+    """Top-n FilterValue names closest to target.
+
+    If target parses as a pint Quantity, prefers magnitude proximity (the natural
+    notion of "close" for unit-bearing values). Otherwise falls back to edit-distance
+    string similarity. Catches the typo-470-as-473 case the old "20 smallest sorted
+    ascending" behavior failed to help with.
+    """
+    target_qty = _to_quantity(target)
+    if target_qty is not None:
+        try:
+            target_mag = target_qty.to_base_units().magnitude
+        except Exception:
+            target_mag = None
+        if target_mag is not None:
+            scored = []
+            for fv in available_values:
+                fv_qty = _to_quantity(fv.get("ValueName"))
+                if fv_qty is None:
+                    continue
+                try:
+                    mag = fv_qty.to_base_units().magnitude
+                    scored.append((abs(mag - target_mag), fv.get("ValueName")))
+                except Exception:
+                    continue
+            if scored:
+                scored.sort()
+                return [name for _, name in scored[:n]]
+    names = [fv.get("ValueName") for fv in available_values if fv.get("ValueName")]
+    matches = difflib.get_close_matches(str(target), names, n=n, cutoff=0.3)
+    return matches or names[:n]
+
+
+def _match_parameter(name: str, available: list) -> dict:
+    """Find a parameter in the available list by name. Raises ValueError with candidates if ambiguous/missing."""
+    target = _normalize_text(name)
+    exact = [p for p in available if _normalize_text(p.get("ParameterName")) == target]
+    if len(exact) == 1:
+        return exact[0]
+    if len(exact) > 1:
+        names = [p.get("ParameterName") for p in exact]
+        raise ValueError(f"Attribute name '{name}' matched multiple parameters: {names}")
+
+    contains = [p for p in available if target and target in _normalize_text(p.get("ParameterName"))]
+    if len(contains) == 1:
+        return contains[0]
+    if len(contains) > 1:
+        names = [p.get("ParameterName") for p in contains]
+        raise ValueError(f"Attribute name '{name}' is ambiguous; candidates: {names}")
+
+    all_names = sorted({p.get("ParameterName") for p in available if p.get("ParameterName")})
+    close = _suggest_close_names(name, all_names)
+    raise ValueError(
+        f"Attribute name {name!r} not found in category. "
+        f"Did you mean: {close}? ({len(all_names)} attributes total)"
+    )
+
+
+_UREG = pint.UnitRegistry()
+# DigiKey writes spelled-out unit names with capitalization and plurals that pint's
+# default registry rejects ('Ohms', 'kOhms', 'Henries', 'Volts', etc.). Register them
+# as aliases — pint then handles SI prefixes on top automatically, so '4.7 kOhms' and
+# '100 µOhms' parse correctly without any further work.
+for _alias_def in (
+    "@alias ohm = Ohm = Ohms = ohms",
+    "@alias hertz = Hertz",
+    "@alias henry = Henries = henries = Henry",
+    "@alias farad = Farad = Farads = farads",
+    "@alias volt = Volt = Volts = volts",
+    "@alias ampere = Amp = Amps = amps",
+    "@alias watt = Watt = Watts = watts",
+):
+    _UREG.define(_alias_def)
+# Operators/separators that signal a compound expression DigiKey uses for non-quantity
+# value formatting. We reject these before pint evaluates them as math (see _to_quantity).
+#   '@'  — DigiKey's coupled-value separator (Ripple Current @ 100 kHz). Pint reads as
+#          matrix multiplication, falls back to scalar product. Silent garbage.
+#   '/'  followed by digits — slash-separated alternatives like '100/120/200V'. Pint
+#          evaluates as division.
+#   ','  — comma-separated values; pint behavior is parser-version-dependent.
+_COMPOUND_OPERATOR_RE = re.compile(r"@|/\s*\d|,")
+
+
+def _to_quantity(value):
+    """Parse a DigiKey filter value (e.g. '470 µF', '12.5 mm', '1 kΩ') to a pint Quantity.
+
+    Returns None when the value isn't a clean unit string — e.g. '8000 Hrs @ 105°C'
+    (undefined units), an empty/whitespace string, or a malformed input. Callers should
+    treat None as "not comparable" and fall back to exact-string matching.
+
+    The except clause is narrowed to the exception types pint actually raises for invalid
+    inputs (observed across DigiKey's filter-value corpus). Genuine bugs — typos against
+    the pint API, ImportError, etc. — propagate so they surface during development rather
+    than being silently swallowed as "this value can't be parsed."
+    """
+    if value is None:
+        return None
+    s = str(value).strip().lstrip("±")
+    # Pre-filter compound expressions before pint sees them. Pint's parser reuses Python's
+    # AST and silently evaluates operators — '500 mA @ 100 kHz' becomes a scalar product
+    # (50000 mA·kHz), '100/120/200V' becomes a fraction, etc. The resulting Quantity has
+    # the wrong dimensionality for our use case but compares "successfully" against other
+    # similarly-mangled values, producing silent-garbage filter results. None here forces
+    # callers (e.g. range matching) to either fall back to discrete matching or error out
+    # cleanly via their None-check.
+    if _COMPOUND_OPERATOR_RE.search(s):
+        return None
+    try:
+        return _UREG.Quantity(s)
+    except (pint.PintError, ValueError, TypeError, AssertionError):
+        return None
+
+
+def _match_values(param: dict, values) -> list:
+    """Resolve user-supplied value strings to ValueIds for a given parameter.
+
+    `values` can be:
+      - a single string/number/int (e.g. '470 µF')
+      - a list of the above
+      - a dict {'min': X, 'max': Y} for numeric ranges (either bound optional). When supplied,
+        matches all FilterValues whose parsed numeric magnitude is within [min, max].
+
+    Raises ValueError with close candidates on a miss.
+    """
+    available_values = param.get("FilterValues") or []
+
+    # Range form: {"min": ..., "max": ...}
+    if isinstance(values, dict) and ("min" in values or "max" in values):
+        # Coupled-unit parameters (e.g. 'Ripple Current @ Low Frequency', valued like
+        # '500 mA @ 100 kHz') describe two axes — a current and a frequency. There's no
+        # single scalar magnitude to compare against, so a range query is semantically
+        # ill-defined: pint would silently compute (current × frequency) and produce
+        # plausible-looking but wrong results. Refuse it explicitly.
+        if param.get("ParameterType") == "CoupledUnitOfMeasure":
+            raise ValueError(
+                f"Range matching is not supported on '{param.get('ParameterName')}' — it's a "
+                f"coupled-unit parameter (two axes per value, e.g. current @ frequency) and the "
+                f"two axes can't be reduced to a single magnitude. Use a discrete value or a "
+                f"list of values from the histogram instead."
+            )
+        lo = _to_quantity(values.get("min"))
+        hi = _to_quantity(values.get("max"))
+        sample = [fv.get("ValueName") for fv in available_values[:10]]
+        if values.get("min") is not None and lo is None:
+            raise ValueError(
+                f"Could not parse range minimum {values['min']!r} for '{param.get('ParameterName')}' "
+                f"as a unit-bearing quantity. Use a discrete value from the histogram instead. "
+                f"Sample values: {sample}"
+            )
+        if values.get("max") is not None and hi is None:
+            raise ValueError(
+                f"Could not parse range maximum {values['max']!r} for '{param.get('ParameterName')}' "
+                f"as a unit-bearing quantity. Use a discrete value from the histogram instead. "
+                f"Sample values: {sample}"
+            )
+        resolved = []
+        for fv in available_values:
+            q = _to_quantity(fv.get("ValueName"))
+            if q is None:
+                continue
+            try:
+                if lo is not None and q < lo:
+                    continue
+                if hi is not None and q > hi:
+                    continue
+            except (pint.DimensionalityError, pint.OffsetUnitCalculusError, TypeError):
+                continue
+            resolved.append(fv.get("ValueId"))
+        if not resolved:
+            raise ValueError(
+                f"No values for '{param.get('ParameterName')}' match range {values}. "
+                f"Sample values: {sample}"
+            )
+        return resolved
+
+    if isinstance(values, (str, int, float)):
+        values = [values]
+    resolved = []
+    for v in values:
+        target = _normalize_text(v)
+        exact = [fv for fv in available_values if _normalize_text(fv.get("ValueName")) == target]
+        primary = exact[0] if len(exact) == 1 else None
+        if not primary:
+            contains = [fv for fv in available_values if target and target in _normalize_text(fv.get("ValueName"))]
+            if len(contains) == 1:
+                primary = contains[0]
+            elif len(contains) > 1:
+                names = [fv.get("ValueName") for fv in contains]
+                raise ValueError(f"Value '{v}' for '{param.get('ParameterName')}' is ambiguous: {names}")
+
+        # Expand to magnitude aliases. DigiKey enumerates the same physical value under
+        # multiple unit strings as distinct buckets ('1 mF' and '1000 µF'). Empirically
+        # both return the same product set (test report) but we don't know that's
+        # universal — a product tagged only under one alias would be silently dropped if
+        # we passed just the literal match. Always send DigiKey every magnitude-equivalent
+        # ValueId so the result is a union; display-side dedup happens separately.
+        if primary:
+            matched_fvs = _expand_to_magnitude_aliases(primary, available_values)
+        else:
+            # No string-based hit — try a quantity-magnitude match (cross-prefix input
+            # like '0.47 mF' when the histogram only enumerates '470 µF', or '100 nF'
+            # vs '0.1 µF'). Use _magnitude_key rather than pint's `==` because the
+            # latter can return False for physically-equal cross-prefix quantities due
+            # to float-rounding artefacts (1e-07 vs 1.0000000000000001e-07).
+            user_qty = _to_quantity(v)
+            matched_fvs = []
+            if user_qty is not None:
+                try:
+                    user_key = _magnitude_key(user_qty)
+                except Exception:
+                    user_key = None
+                for fv in available_values:
+                    fv_qty = _to_quantity(fv.get("ValueName"))
+                    if fv_qty is None:
+                        continue
+                    try:
+                        if (
+                            user_key is not None
+                            and user_qty.dimensionality == fv_qty.dimensionality
+                            and _magnitude_key(fv_qty) == user_key
+                        ):
+                            matched_fvs.append(fv)
+                    except (pint.DimensionalityError, pint.OffsetUnitCalculusError, TypeError):
+                        continue
+
+        if not matched_fvs:
+            close = _suggest_close_values(v, available_values)
+            raise ValueError(
+                f"Value {v!r} not found for '{param.get('ParameterName')}'. "
+                f"Did you mean: {close}? ({len(available_values)} values total)"
+            )
+        for fv in matched_fvs:
+            resolved.append(fv.get("ValueId"))
+    return resolved
+
+
+def _expand_to_magnitude_aliases(primary: dict, available: list) -> list:
+    """Return primary plus every FilterValue with the same base-unit magnitude.
+
+    Defensive against DigiKey tagging the same physical value under multiple unit
+    strings as separate buckets ('1 mF' / '1000 µF'). We don't know if DigiKey
+    always aliases internally — passing the union of ValueIds guarantees we don't
+    drop products that happen to be tagged under a different alias. Primary always
+    comes first so display order is stable.
+    """
+    qty = _to_quantity(primary.get("ValueName"))
+    if qty is None:
+        return [primary]
+    try:
+        target_key = _magnitude_key(qty)
+    except Exception:
+        return [primary]
+    aliases = [primary]
+    for fv in available:
+        if fv is primary:
+            continue
+        other = _to_quantity(fv.get("ValueName"))
+        if other is None:
+            continue
+        try:
+            if _magnitude_key(other) == target_key:
+                aliases.append(fv)
+        except Exception:
+            continue
+    return aliases
+
+
+def _magnitude_key(q):
+    """Stable comparison/hash key for a pint Quantity's base-unit magnitude.
+
+    Pint's prefix conversion can introduce tiny float-rounding artefacts that make
+    physically-equal values compare unequal (`0.1 µF`.magnitude == 1e-07 but
+    `100 nF`.magnitude == 1.0000000000000001e-07). Rounding to 9 significant figures
+    is well below DigiKey's catalog precision (typically 3–4 sig figs) while wider
+    than every float-rounding artefact pint produces.
+    """
+    return float(f"{q.to_base_units().magnitude:.9e}")
+
+
+def _sort_by_magnitude(names: list) -> list:
+    """Return names sorted ascending by base-unit magnitude. Names that don't parse via
+    pint are dropped (used only to compute From/To bounds, where unparseable values
+    can't be meaningfully ordered against each other anyway)."""
+    pairs = []
+    for n in names:
+        q = _to_quantity(n)
+        if q is None:
+            continue
+        try:
+            pairs.append((q.to_base_units().magnitude, n))
+        except Exception:
+            continue
+    pairs.sort()
+    return [n for _, n in pairs]
+
+
+def _dedupe_by_magnitude(names: list) -> list:
+    """Collapse multiple unit-string representations of the same physical value into one.
+
+    DigiKey enumerates the same magnitude under multiple unit strings as separate buckets
+    ('1 mF' and '1000 µF', '0.1 µF' and '100 nF', etc.). For a range query they all match
+    the same product set, so reporting them as distinct matches inflates the count and
+    bloats the Sample. Keep the first occurrence per base-unit magnitude (DigiKey orders
+    histograms by ProductCount desc, so this is the most popular alias). Values that don't
+    parse via pint pass through unchanged — we can't normalize what we can't measure.
+    """
+    seen = set()
+    out = []
+    for name in names:
+        q = _to_quantity(name)
+        if q is None:
+            out.append(name)
+            continue
+        try:
+            key = _magnitude_key(q)
+        except Exception:
+            out.append(name)
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(name)
+    return out
+
+
+def _slim_product(product: dict) -> dict:
+    """Trim a DigiKey Product to the fields most useful in an LLM context.
+
+    Fields straight-from-DigiKey keep their original PascalCase name. Fields where we change
+    the *shape* (object → string, list-of-objects → flat dict, etc.) get a distinct name so
+    callers reading DigiKey's docs don't get misled:
+      - ManufacturerName: the .Name extracted from DigiKey's Manufacturer object
+      - ProductDescription: the short description string from DigiKey's Description object
+      - ParameterMap: name→value flat dict reduced from DigiKey's Parameters list-of-objects
+      - DigiKeyProductNumber: the primary variation's DK PN. DigiKey itself only exposes this
+        nested in ProductVariations[], so reusing the name at top level doesn't shadow anything.
+    """
+    variations = product.get("ProductVariations") or []
+    manufacturer = product.get("Manufacturer") or {}
+    description = product.get("Description") or {}
+    return {
+        "ManufacturerProductNumber": product.get("ManufacturerProductNumber"),
+        "DigiKeyProductNumber": variations[0].get("DigiKeyProductNumber") if variations else None,
+        "ManufacturerName": manufacturer.get("Name") or manufacturer.get("Value"),
+        "ProductDescription": description.get("ProductDescription"),
+        "UnitPrice": product.get("UnitPrice"),
+        "QuantityAvailable": product.get("QuantityAvailable"),
+        "DatasheetUrl": product.get("DatasheetUrl"),
+        "ProductUrl": product.get("ProductUrl"),
+        "ParameterMap": {
+            pv.get("ParameterText"): pv.get("ValueText")
+            for pv in (product.get("Parameters") or [])
+            if pv.get("ParameterText")
+        },
+    }
+
+
+@mcp.tool()
+def find_components(
+    category_id: str,
+    attributes: dict = None,
+    keywords: str = "",
+    limit: int = 25,
+    in_stock_only: bool = False,
+):
+    """High-level parametric component search. Resolves human-readable attribute names/values to DigiKey ids and returns slim results.
+
+    Examples:
+        # Discrete value match
+        find_components(
+            category_id="58",
+            attributes={"Capacitance": "470 µF"},
+            in_stock_only=True,
+        )
+
+        # Min/max range — finds all values whose magnitude falls in the window
+        find_components(
+            category_id="58",
+            attributes={
+                "Capacitance": {"min": "100 µF", "max": "1000 µF"},
+                "Diameter - Seated (Max)": {"max": "10mm"},
+            },
+        )
+
+    Args:
+        category_id: Numeric DigiKey category id (use search_categories to find it).
+        attributes: Mapping of attribute name -> value spec. Each value spec may be:
+            * a single value string ("470 µF")
+            * a list of values (["10mm", "12.5mm"]) — matches any
+            * a range dict ({"min": "100 µF", "max": "1000 µF"}) — either bound optional
+            Names and discrete values are matched case-insensitively with micro-sign folding.
+            Errors list close candidates so the model can retry.
+        keywords: Optional free-text keywords. When omitted, the category's own name is used
+            as Keywords — this is what makes DigiKey return the full category set.
+        limit: Max results to return (default 25, DigiKey caps at 50).
+        in_stock_only: If True, restrict to in-stock products.
+
+    Returns:
+        {"ProductsCount": int, "AppliedFilters": {...}, "Products": [slim_product, ...]}
+
+    Note on sorting: DigiKey can't sort by parametric attributes server-side, and sorting
+    the returned page client-side would be misleading (it would sort N results from a much
+    larger matching set, not the global top-N). To get the actual top-K by some attribute,
+    narrow the query with parametric filters until the result set fits in one page, then
+    sort the returned products[] in your own code.
+    """
+    # Normalize whitespace so '   ' doesn't slip through to DigiKey as a literal-character
+    # keyword match (the same issue keyword_search rejects). Empty after strip → use the
+    # category-name fallback downstream.
+    keywords = (keywords or "").strip()
+
+    # Only fetch the parametric histogram when the caller actually needs to resolve
+    # attribute names — keyword-only calls (no attributes) don't, and the discovery
+    # request is a wasted POST otherwise.
+    filters_meta = []
+    if attributes:
+        filters_meta = _get_parametric_filters(category_id=category_id, keywords="", limit=1)
+        # Broad parent categories (e.g. cat 20 Connectors, cat 32 Integrated Circuits) return
+        # no parametric filters — DigiKey only computes facets at the leaf level. The error
+        # from _match_parameter ("Available: []") would point at the attribute name when the
+        # real problem is the category.
+        if not filters_meta:
+            cat_name = _get_category_name(category_id)
+            raise ValueError(
+                f"Category {category_id} ({cat_name!r}) has no parametric attributes — DigiKey "
+                f"computes facets only at the leaf level, and this appears to be a parent category. "
+                f"Use search_categories or get_category_by_id to find a leaf subcategory."
+            )
+
+    parameter_filters = {}
+    applied = {}
+    for name, values in (attributes or {}).items():
+        is_range = isinstance(values, dict) and ("min" in values or "max" in values)
+        param = _match_parameter(name, filters_meta)
+        value_ids = _match_values(param, values)
+        parameter_filters[param["ParameterId"]] = value_ids
+        matched_names = [
+            fv.get("ValueName")
+            for fv in (param.get("FilterValues") or [])
+            if fv.get("ValueId") in value_ids
+        ]
+        # The shape of `applied` signals the kind of query. A list says "the user asked for
+        # these specific values" (and the caller probably wants to see them all). A summary
+        # dict says "the user asked for a range" — the literal list isn't what they specified,
+        # and dumping hundreds of bucket names back at them isn't informative.
+        if is_range:
+            distinct_names = _dedupe_by_magnitude(matched_names)
+            # From/To must reflect the actual numeric bounds of the matched set, not
+            # DigiKey's response order (which is by ProductCount desc — so the old code
+            # was labelling "the most popular alias" as From and "the least popular" as
+            # To, which is wrong). Sample stays in popularity order — that's what makes
+            # it informative.
+            by_magnitude = _sort_by_magnitude(distinct_names)
+            applied[param.get("ParameterName")] = {
+                "MatchedCount": len(distinct_names),
+                "From": by_magnitude[0] if by_magnitude else (distinct_names[0] if distinct_names else None),
+                "To": by_magnitude[-1] if by_magnitude else (distinct_names[-1] if distinct_names else None),
+                "Sample": distinct_names[:5],
+            }
+        else:
+            applied[param.get("ParameterName")] = matched_names
+
+    raw = _do_keyword_search(
+        keywords=keywords,
+        limit=limit,
+        category_id=str(category_id),
+        search_options="InStock" if in_stock_only else None,
+        parameter_filters=parameter_filters or None,
+        use_category_as_keyword=True,
+    )
+
+    products = [_slim_product(p) for p in (raw.get("Products") or [])]
+
+    return {
+        "ProductsCount": raw.get("ProductsCount"),
+        "AppliedFilters": applied,
+        "Products": products,
+    }
+
 
 @mcp.tool()
 def product_details(product_number: str, manufacturer_id: str = None, customer_id: str = "0"):

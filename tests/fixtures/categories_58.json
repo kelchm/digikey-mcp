@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://api.digikey.com/products/v4/search/categories/58",
+    "body": null
+  },
+  "response": {
+    "Category": {
+      "CategoryId": 3,
+      "ParentId": 0,
+      "Name": "Capacitors",
+      "ProductCount": 112501,
+      "Children": [
+        {
+          "CategoryId": 58,
+          "ParentId": 3,
+          "Name": "Aluminum Electrolytic Capacitors",
+          "ProductCount": 112501,
+          "Children": []
+        }
+      ]
+    },
+    "SearchLocaleUsed": {
+      "Site": "US",
+      "Language": "en",
+      "Currency": "USD"
+    }
+  }
+}

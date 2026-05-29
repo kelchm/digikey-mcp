@@ -1,0 +1,3033 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.digikey.com/products/v4/search/keyword",
+    "body": {
+      "Keywords": "Connectors, Interconnects",
+      "Limit": 1,
+      "FilterOptionsRequest": {
+        "CategoryFilter": [
+          {
+            "Id": "20"
+          }
+        ]
+      }
+    }
+  },
+  "response": {
+    "Products": [
+      {
+        "Description": {
+          "ProductDescription": "CONN SOCKET 26-28AWG CRIMP TIN",
+          "DetailedDescription": "Socket Contact Tin 26-28 AWG Crimp"
+        },
+        "Manufacturer": {
+          "Id": 455,
+          "Name": "JST Sales America Inc."
+        },
+        "ManufacturerProductNumber": "SZH-002T-P0.5",
+        "UnitPrice": 0.01312,
+        "ProductUrl": "https://www.digikey.com/en/products/detail/jst-sales-america-inc/SZH-002T-P0-5/527363",
+        "DatasheetUrl": "https://www.jst-mfg.com/product/pdf/eng/eZH.pdf",
+        "PhotoUrl": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/1085/SZH-002T-P0.5.jpg",
+        "ProductVariations": [
+          {
+            "DigiKeyProductNumber": "455-1130TR-ND",
+            "PackageType": {
+              "Id": 1,
+              "Name": "Tape & Reel (TR)"
+            },
+            "StandardPricing": [
+              {
+                "BreakQuantity": 13000,
+                "UnitPrice": 0.01312,
+                "TotalPrice": 170.56
+              },
+              {
+                "BreakQuantity": 26000,
+                "UnitPrice": 0.01249,
+                "TotalPrice": 324.74
+              },
+              {
+                "BreakQuantity": 39000,
+                "UnitPrice": 0.01214,
+                "TotalPrice": 473.46
+              },
+              {
+                "BreakQuantity": 65000,
+                "UnitPrice": 0.01171,
+                "TotalPrice": 761.15
+              },
+              {
+                "BreakQuantity": 91000,
+                "UnitPrice": 0.01144,
+                "TotalPrice": 1041.04
+              },
+              {
+                "BreakQuantity": 130000,
+                "UnitPrice": 0.01115,
+                "TotalPrice": 1449.5
+              }
+            ],
+            "MyPricing": [],
+            "MarketPlace": false,
+            "TariffActive": true,
+            "Supplier": {
+              "Id": 455,
+              "Name": "JST Sales America Inc."
+            },
+            "QuantityAvailableforPackageType": 364000,
+            "MaxQuantityForDistribution": 999999999,
+            "MinimumOrderQuantity": 13000,
+            "StandardPackage": 13000,
+            "DigiReelFee": 0.0
+          }
+        ],
+        "QuantityAvailable": 364000,
+        "ProductStatus": {
+          "Id": 0,
+          "Status": "Active"
+        },
+        "BackOrderNotAllowed": false,
+        "NormallyStocking": true,
+        "Discontinued": false,
+        "EndOfLife": false,
+        "Ncnr": false,
+        "PrimaryVideoUrl": "",
+        "Parameters": [
+          {
+            "ParameterId": 183,
+            "ParameterText": "Type",
+            "ParameterType": "String",
+            "ValueId": "1",
+            "ValueText": "-"
+          },
+          {
+            "ParameterId": 233,
+            "ParameterText": "Pin or Socket",
+            "ParameterType": "String",
+            "ValueId": "404675",
+            "ValueText": "Socket"
+          },
+          {
+            "ParameterId": 31,
+            "ParameterText": "Contact Termination",
+            "ParameterType": "String",
+            "ValueId": "334919",
+            "ValueText": "Crimp"
+          },
+          {
+            "ParameterId": 78,
+            "ParameterText": "Wire Gauge",
+            "ParameterType": "String",
+            "ValueId": "160543",
+            "ValueText": "26-28 AWG"
+          },
+          {
+            "ParameterId": 30,
+            "ParameterText": "Contact Finish",
+            "ParameterType": "String",
+            "ValueId": "412237",
+            "ValueText": "Tin"
+          },
+          {
+            "ParameterId": 834,
+            "ParameterText": "Contact Finish Thickness",
+            "ParameterType": "String",
+            "ValueId": "1",
+            "ValueText": "-"
+          }
+        ],
+        "BaseProductNumber": {
+          "Id": 578457,
+          "Name": "SZH-002"
+        },
+        "Category": {
+          "CategoryId": 20,
+          "ParentId": 0,
+          "Name": "Connectors, Interconnects",
+          "ProductCount": 0,
+          "NewProductCount": 0,
+          "ImageUrl": "https://www.digikey.com//mm.digikey.com/Volume0/opasdata/d220001/derivates/3/002/279/043/204507-1_tmb.jpg",
+          "SeoDescription": "Connector and interconnect products facilitate the joining of electrical or fiber optic conductors & cables. An enormous variety of styles are available, to accommodate most any application; banana plugs for lab equipment, coaxial connectors for RF, modular plugs for network and phone systems, spade and ring terminals for connecting discrete wires to terminal blocks, terminal blocks, sockets for transistors and integrated circuits, standard AC power connectors, headphone plugs and jacks, high-voltage connectors, USB connectors, and many, many more.",
+          "ChildCategories": [
+            {
+              "CategoryId": 2027,
+              "ParentId": 20,
+              "Name": "Rectangular Connectors",
+              "ProductCount": 0,
+              "NewProductCount": 0,
+              "ImageUrl": "https://www.digikey.com//mm.digikey.com/Volume0/opasdata/d220001/derivates/3/002/244/550/C-Grid-III-90131%282-POS%29tin_tmb.jpg",
+              "SeoDescription": "Rectangular Connectors include a wide variety of connector solutions for power, data, and signal applications. As the name implies, they are rectangular in shape and can provide ease to the design process. Many of the most commonly found connectors and connector accessories fall into this category.",
+              "ChildCategories": [
+                {
+                  "CategoryId": 331,
+                  "ParentId": 2027,
+                  "Name": "Rectangular Connector Contacts",
+                  "ProductCount": 0,
+                  "NewProductCount": 0,
+                  "ImageUrl": "https://www.digikey.com//mm.digikey.com/Volume0/opasdata/d220001/derivates/3/001/684/sxh-001t-p0.6_tmb.jpg",
+                  "SeoDescription": "Rectangular Connector Contacts are male, female, or non-gendered terminals that are used in connectors. These terminals are specifically used in connectors that will have a rectangular look to the mating end of the device. The pin or socket will be a blade, board-in, female blade sockets, non-gendered, pin, socket, split pin, or tab in wire gauges ranging from 1/0 AWG to 36 AWG.",
+                  "ChildCategories": []
+                }
+              ]
+            }
+          ]
+        },
+        "DateLastBuyChance": null,
+        "ManufacturerLeadWeeks": "16",
+        "ManufacturerPublicQuantity": 0,
+        "Series": {
+          "Id": 3743,
+          "Name": "ZH"
+        },
+        "ShippingInfo": null,
+        "Classifications": {
+          "ReachStatus": "REACH Unaffected",
+          "RohsStatus": "ROHS3 Compliant",
+          "MoistureSensitivityLevel": "1  (Unlimited)",
+          "ExportControlClassNumber": "EAR99",
+          "HtsusCode": "8536.90.4000"
+        },
+        "OtherNames": [
+          "455-1130TR",
+          "455-1130CT",
+          "(Q)SZH-002T-P0.5",
+          "455-1130-2-ND",
+          "455-1130-1-ND",
+          "SZH002TP05",
+          "455-1130-1",
+          "455-1130-2"
+        ]
+      }
+    ],
+    "ProductsCount": 5675228,
+    "ExactMatches": [],
+    "FilterOptions": {
+      "Manufacturers": [
+        {
+          "Id": 19,
+          "Value": "3M",
+          "ProductCount": 15731
+        },
+        {
+          "Id": 6052,
+          "Value": "4XEM",
+          "ProductCount": 16
+        },
+        {
+          "Id": 6308,
+          "Value": "ABB Electrification (Thomas and Betts)",
+          "ProductCount": 8184
+        },
+        {
+          "Id": 6463,
+          "Value": "ABBATRON",
+          "ProductCount": 234
+        },
+        {
+          "Id": 601780,
+          "Value": "Abbotec",
+          "ProductCount": 25
+        },
+        {
+          "Id": 535,
+          "Value": "Abracon LLC",
+          "ProductCount": 2501
+        },
+        {
+          "Id": 5148,
+          "Value": "AC Connectors",
+          "ProductCount": 352
+        },
+        {
+          "Id": 602240,
+          "Value": "AC WORKS®",
+          "ProductCount": 63
+        },
+        {
+          "Id": 2910,
+          "Value": "ACCES I/O Products, Inc.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 4294,
+          "Value": "Aces Connectors",
+          "ProductCount": 479
+        },
+        {
+          "Id": 1528,
+          "Value": "Adafruit Industries LLC",
+          "ProductCount": 238
+        },
+        {
+          "Id": 2057,
+          "Value": "Adam Tech",
+          "ProductCount": 9151
+        },
+        {
+          "Id": 2098,
+          "Value": "Adels-Contact",
+          "ProductCount": 299
+        },
+        {
+          "Id": 601781,
+          "Value": "ADI Electronics",
+          "ProductCount": 11
+        },
+        {
+          "Id": 4127,
+          "Value": "Adoretek",
+          "ProductCount": 48
+        },
+        {
+          "Id": 2162,
+          "Value": "Advanced Cable Ties, Inc.",
+          "ProductCount": 149
+        },
+        {
+          "Id": 5995,
+          "Value": "Advanced-Connectek USA",
+          "ProductCount": 27
+        },
+        {
+          "Id": 2084,
+          "Value": "Advantech Corporation",
+          "ProductCount": 37
+        },
+        {
+          "Id": 601782,
+          "Value": "Aero Electric",
+          "ProductCount": 79
+        },
+        {
+          "Id": 601653,
+          "Value": "AFL (American Fujikura)",
+          "ProductCount": 12
+        },
+        {
+          "Id": 602487,
+          "Value": "Aiconics",
+          "ProductCount": 1
+        },
+        {
+          "Id": 601874,
+          "Value": "AirBorn",
+          "ProductCount": 24682
+        },
+        {
+          "Id": 4134,
+          "Value": "AirBorn, a Molex company",
+          "ProductCount": 9892
+        },
+        {
+          "Id": 3475,
+          "Value": "Allied Components International",
+          "ProductCount": 69
+        },
+        {
+          "Id": 216,
+          "Value": "Alpha Wire",
+          "ProductCount": 60
+        },
+        {
+          "Id": 4809,
+          "Value": "Alps Alpine",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1920,
+          "Value": "Altech Corporation",
+          "ProductCount": 12551
+        },
+        {
+          "Id": 288,
+          "Value": "American Electrical Inc.",
+          "ProductCount": 1042
+        },
+        {
+          "Id": 1691,
+          "Value": "American Hakko Products, Inc.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 3331,
+          "Value": "American Micro Products",
+          "ProductCount": 4
+        },
+        {
+          "Id": 4513,
+          "Value": "American Recorder Technologies, Inc.",
+          "ProductCount": 14
+        },
+        {
+          "Id": 1178,
+          "Value": "Amphenol Aerospace Operations",
+          "ProductCount": 1117610
+        },
+        {
+          "Id": 600312,
+          "Value": "Amphenol Air LB",
+          "ProductCount": 2
+        },
+        {
+          "Id": 602456,
+          "Value": "Amphenol Air LB France",
+          "ProductCount": 885
+        },
+        {
+          "Id": 601084,
+          "Value": "Amphenol Air LB Germany",
+          "ProductCount": 25988
+        },
+        {
+          "Id": 1812,
+          "Value": "Amphenol Alden Products Company",
+          "ProductCount": 19
+        },
+        {
+          "Id": 1818,
+          "Value": "Amphenol Anytek",
+          "ProductCount": 25789
+        },
+        {
+          "Id": 600366,
+          "Value": "Amphenol Audio",
+          "ProductCount": 708
+        },
+        {
+          "Id": 3272,
+          "Value": "Amphenol Cables on Demand",
+          "ProductCount": 26
+        },
+        {
+          "Id": 4305,
+          "Value": "Amphenol Canada Corporation - Military and Aerospace",
+          "ProductCount": 2770
+        },
+        {
+          "Id": 2317,
+          "Value": "Amphenol CDI",
+          "ProductCount": 97
+        },
+        {
+          "Id": 626,
+          "Value": "Amphenol CONEC",
+          "ProductCount": 6398
+        },
+        {
+          "Id": 600073,
+          "Value": "Amphenol Corporation",
+          "ProductCount": 94561
+        },
+        {
+          "Id": 1968,
+          "Value": "Amphenol Fiber Systems International",
+          "ProductCount": 77
+        },
+        {
+          "Id": 2188,
+          "Value": "Amphenol ICC",
+          "ProductCount": 32
+        },
+        {
+          "Id": 664,
+          "Value": "Amphenol ICC (Commercial Products)",
+          "ProductCount": 16201
+        },
+        {
+          "Id": 609,
+          "Value": "Amphenol ICC (FCI)",
+          "ProductCount": 42000
+        },
+        {
+          "Id": 339,
+          "Value": "Amphenol Industrial Operations",
+          "ProductCount": 209064
+        },
+        {
+          "Id": 600321,
+          "Value": "Amphenol Interconnect India",
+          "ProductCount": 1702
+        },
+        {
+          "Id": 600313,
+          "Value": "Amphenol Limited",
+          "ProductCount": 40546
+        },
+        {
+          "Id": 600314,
+          "Value": "Amphenol LTD",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1754,
+          "Value": "Amphenol LTW",
+          "ProductCount": 4954
+        },
+        {
+          "Id": 4995,
+          "Value": "Amphenol LTW",
+          "ProductCount": 22
+        },
+        {
+          "Id": 602065,
+          "Value": "Amphenol Matrix",
+          "ProductCount": 198
+        },
+        {
+          "Id": 1949,
+          "Value": "Amphenol Narda-MITEQ",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1967,
+          "Value": "Amphenol NEXUS Technologies",
+          "ProductCount": 496
+        },
+        {
+          "Id": 4239,
+          "Value": "Amphenol Onanon",
+          "ProductCount": 16
+        },
+        {
+          "Id": 623,
+          "Value": "Amphenol PCD",
+          "ProductCount": 30121
+        },
+        {
+          "Id": 1032,
+          "Value": "Amphenol PCD Shenzhen",
+          "ProductCount": 9725
+        },
+        {
+          "Id": 3299,
+          "Value": "Amphenol PCTEL",
+          "ProductCount": 3
+        },
+        {
+          "Id": 4306,
+          "Value": "Amphenol Positronic",
+          "ProductCount": 190498
+        },
+        {
+          "Id": 2496,
+          "Value": "Amphenol Procom",
+          "ProductCount": 28
+        },
+        {
+          "Id": 4932,
+          "Value": "Amphenol ProLabs",
+          "ProductCount": 9
+        },
+        {
+          "Id": 115,
+          "Value": "Amphenol RF",
+          "ProductCount": 3416
+        },
+        {
+          "Id": 889,
+          "Value": "Amphenol Sine Systems Corp",
+          "ProductCount": 7213
+        },
+        {
+          "Id": 600315,
+          "Value": "Amphenol Socapex",
+          "ProductCount": 4024
+        },
+        {
+          "Id": 1678,
+          "Value": "Amphenol SV Microwave",
+          "ProductCount": 1079
+        },
+        {
+          "Id": 3936,
+          "Value": "Amphenol Technical Products International",
+          "ProductCount": 1549
+        },
+        {
+          "Id": 1946,
+          "Value": "Amphenol Times Microwave Systems",
+          "ProductCount": 551
+        },
+        {
+          "Id": 300637,
+          "Value": "Amphenol Tuchel Industrial",
+          "ProductCount": 2392
+        },
+        {
+          "Id": 2053,
+          "Value": "Amphenol Wilcoxon Sensing Technologies",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5984,
+          "Value": "Amphenol XMA",
+          "ProductCount": 127
+        },
+        {
+          "Id": 4489,
+          "Value": "AMTI Products",
+          "ProductCount": 1
+        },
+        {
+          "Id": 175,
+          "Value": "Analog Devices Inc./Maxim Integrated",
+          "ProductCount": 3
+        },
+        {
+          "Id": 5550,
+          "Value": "Anatech Microwave Company",
+          "ProductCount": 4
+        },
+        {
+          "Id": 2243,
+          "Value": "Anderson Power Products, Inc.",
+          "ProductCount": 2181
+        },
+        {
+          "Id": 602122,
+          "Value": "Antaira Technologies",
+          "ProductCount": 1
+        },
+        {
+          "Id": 627,
+          "Value": "Antenova",
+          "ProductCount": 8
+        },
+        {
+          "Id": 43,
+          "Value": "Aries Electronics",
+          "ProductCount": 5012
+        },
+        {
+          "Id": 602004,
+          "Value": "ASI-Automation Systems Interconnect",
+          "ProductCount": 91
+        },
+        {
+          "Id": 3500,
+          "Value": "ASI-Ez",
+          "ProductCount": 35
+        },
+        {
+          "Id": 123,
+          "Value": "Assmann WSW Components",
+          "ProductCount": 17472
+        },
+        {
+          "Id": 5926,
+          "Value": "Athena Computer Power Corporation",
+          "ProductCount": 2
+        },
+        {
+          "Id": 6012,
+          "Value": "ATL",
+          "ProductCount": 58
+        },
+        {
+          "Id": 5016,
+          "Value": "Atlas Scientific",
+          "ProductCount": 4
+        },
+        {
+          "Id": 4827,
+          "Value": "ATTEND Technology",
+          "ProductCount": 383
+        },
+        {
+          "Id": 4110,
+          "Value": "Austin Hardware",
+          "ProductCount": 1
+        },
+        {
+          "Id": 3425,
+          "Value": "AVR Global Technologies, Inc",
+          "ProductCount": 14
+        },
+        {
+          "Id": 2170,
+          "Value": "Banner Engineering Corporation",
+          "ProductCount": 93
+        },
+        {
+          "Id": 6429,
+          "Value": "Bead Electronics",
+          "ProductCount": 3
+        },
+        {
+          "Id": 507,
+          "Value": "Bel Fuse Inc.",
+          "ProductCount": 781
+        },
+        {
+          "Id": 1847,
+          "Value": "Bel Inc.",
+          "ProductCount": 11
+        },
+        {
+          "Id": 179,
+          "Value": "Bel Power Solutions",
+          "ProductCount": 6
+        },
+        {
+          "Id": 135,
+          "Value": "Belden Inc.",
+          "ProductCount": 2309
+        },
+        {
+          "Id": 5395,
+          "Value": "BellWether",
+          "ProductCount": 104
+        },
+        {
+          "Id": 4931,
+          "Value": "BERNIER Connect",
+          "ProductCount": 85
+        },
+        {
+          "Id": 4282,
+          "Value": "Big Cat Cables",
+          "ProductCount": 48
+        },
+        {
+          "Id": 492,
+          "Value": "Bivar Inc.",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5635,
+          "Value": "BlockMaster Electronics",
+          "ProductCount": 172
+        },
+        {
+          "Id": 139,
+          "Value": "Blue Earth Research",
+          "ProductCount": 1
+        },
+        {
+          "Id": 3240,
+          "Value": "BotBlox",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2071,
+          "Value": "Botron Company Inc.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 118,
+          "Value": "Bourns Inc.",
+          "ProductCount": 172
+        },
+        {
+          "Id": 59,
+          "Value": "Boyd Laconia, LLC",
+          "ProductCount": 4
+        },
+        {
+          "Id": 2267,
+          "Value": "Brady Corporation",
+          "ProductCount": 48
+        },
+        {
+          "Id": 2265,
+          "Value": "Brainboxes",
+          "ProductCount": 2
+        },
+        {
+          "Id": 516,
+          "Value": "Broadcom Limited",
+          "ProductCount": 22
+        },
+        {
+          "Id": 377,
+          "Value": "Bud Industries",
+          "ProductCount": 5
+        },
+        {
+          "Id": 708,
+          "Value": "Bulgin",
+          "ProductCount": 3524
+        },
+        {
+          "Id": 108,
+          "Value": "C&K",
+          "ProductCount": 6
+        },
+        {
+          "Id": 2649,
+          "Value": "c3controls",
+          "ProductCount": 58
+        },
+        {
+          "Id": 600222,
+          "Value": "CableMAX",
+          "ProductCount": 85
+        },
+        {
+          "Id": 600474,
+          "Value": "Cabur",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1768,
+          "Value": "Cal Test Electronics",
+          "ProductCount": 669
+        },
+        {
+          "Id": 5022,
+          "Value": "Cambion",
+          "ProductCount": 46
+        },
+        {
+          "Id": 4641,
+          "Value": "CamdenBoss Ltd",
+          "ProductCount": 14
+        },
+        {
+          "Id": 600443,
+          "Value": "CANADUINO®",
+          "ProductCount": 1
+        },
+        {
+          "Id": 3692,
+          "Value": "Caplugs",
+          "ProductCount": 642
+        },
+        {
+          "Id": 1864,
+          "Value": "Carlo Gavazzi Inc.",
+          "ProductCount": 4
+        },
+        {
+          "Id": 3667,
+          "Value": "Celduc Inc.",
+          "ProductCount": 2
+        },
+        {
+          "Id": 602336,
+          "Value": "Cembre",
+          "ProductCount": 3
+        },
+        {
+          "Id": 3586,
+          "Value": "Central Components Manufacturing",
+          "ProductCount": 6
+        },
+        {
+          "Id": 4161,
+          "Value": "Central Technologies",
+          "ProductCount": 5
+        },
+        {
+          "Id": 5766,
+          "Value": "Centric RF",
+          "ProductCount": 8
+        },
+        {
+          "Id": 315,
+          "Value": "Chip Quik Inc.",
+          "ProductCount": 46
+        },
+        {
+          "Id": 2376,
+          "Value": "Chip Shine / CSRF",
+          "ProductCount": 2
+        },
+        {
+          "Id": 2150,
+          "Value": "Chogori Technologies Inc.",
+          "ProductCount": 204
+        },
+        {
+          "Id": 116,
+          "Value": "Cinch Connectivity Solutions",
+          "ProductCount": 4213
+        },
+        {
+          "Id": 367,
+          "Value": "Cinch Connectivity Solutions AIM-Cambridge",
+          "ProductCount": 211
+        },
+        {
+          "Id": 24,
+          "Value": "Cinch Connectivity Solutions Johnson",
+          "ProductCount": 1241
+        },
+        {
+          "Id": 652,
+          "Value": "Cinch Connectivity Solutions Midwest Microwave",
+          "ProductCount": 173
+        },
+        {
+          "Id": 1097,
+          "Value": "Cinch Connectivity Solutions Trompeter",
+          "ProductCount": 629
+        },
+        {
+          "Id": 4654,
+          "Value": "CLIFF Electronic Components Ltd",
+          "ProductCount": 939
+        },
+        {
+          "Id": 601899,
+          "Value": "Club3D",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1175,
+          "Value": "CNC Tech",
+          "ProductCount": 1301
+        },
+        {
+          "Id": 6169,
+          "Value": "Cnlinko",
+          "ProductCount": 615
+        },
+        {
+          "Id": 4442,
+          "Value": "Coax Connectors Ltd",
+          "ProductCount": 34
+        },
+        {
+          "Id": 4870,
+          "Value": "Coherent",
+          "ProductCount": 3
+        },
+        {
+          "Id": 602346,
+          "Value": "Cole Hersee",
+          "ProductCount": 36
+        },
+        {
+          "Id": 2283,
+          "Value": "Comet America, LP",
+          "ProductCount": 1
+        },
+        {
+          "Id": 4771,
+          "Value": "CompuCablePlusUSA",
+          "ProductCount": 128
+        },
+        {
+          "Id": 5412,
+          "Value": "CompuCablePlusUSA",
+          "ProductCount": 38
+        },
+        {
+          "Id": 2210,
+          "Value": "ConductRF",
+          "ProductCount": 19
+        },
+        {
+          "Id": 600258,
+          "Value": "Conesys",
+          "ProductCount": 59794
+        },
+        {
+          "Id": 2080,
+          "Value": "Conta-Clip, Inc.",
+          "ProductCount": 8355
+        },
+        {
+          "Id": 468,
+          "Value": "Conxall/Switchcraft",
+          "ProductCount": 7114
+        },
+        {
+          "Id": 4015,
+          "Value": "Copper Mountain Technologies",
+          "ProductCount": 1
+        },
+        {
+          "Id": 601784,
+          "Value": "Corsair",
+          "ProductCount": 6603
+        },
+        {
+          "Id": 744,
+          "Value": "Crystek Corporation",
+          "ProductCount": 25
+        },
+        {
+          "Id": 364,
+          "Value": "Curtis Industries",
+          "ProductCount": 24376
+        },
+        {
+          "Id": 429,
+          "Value": "Custom Computer Services Inc. (CCS)",
+          "ProductCount": 12
+        },
+        {
+          "Id": 2987,
+          "Value": "Cvilux USA",
+          "ProductCount": 799
+        },
+        {
+          "Id": 32,
+          "Value": "CW Industries",
+          "ProductCount": 348
+        },
+        {
+          "Id": 4227,
+          "Value": "CWB Electronics Inc.",
+          "ProductCount": 72
+        },
+        {
+          "Id": 2721,
+          "Value": "DComponents",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2839,
+          "Value": "Deca",
+          "ProductCount": 173
+        },
+        {
+          "Id": 602191,
+          "Value": "Degson",
+          "ProductCount": 331
+        },
+        {
+          "Id": 5098,
+          "Value": "DEICO",
+          "ProductCount": 39
+        },
+        {
+          "Id": 603,
+          "Value": "Delta Electronics",
+          "ProductCount": 106
+        },
+        {
+          "Id": 2035,
+          "Value": "Delta Electronics/Components",
+          "ProductCount": 33
+        },
+        {
+          "Id": 2039,
+          "Value": "Delta Electronics/Industrial Automation",
+          "ProductCount": 7
+        },
+        {
+          "Id": 16,
+          "Value": "Desco",
+          "ProductCount": 1
+        },
+        {
+          "Id": 602458,
+          "Value": "Detco Industries Inc.",
+          "ProductCount": 5
+        },
+        {
+          "Id": 1738,
+          "Value": "DFRobot",
+          "ProductCount": 20
+        },
+        {
+          "Id": 4252,
+          "Value": "di-soric",
+          "ProductCount": 35
+        },
+        {
+          "Id": 602,
+          "Value": "Digi",
+          "ProductCount": 4
+        },
+        {
+          "Id": 8,
+          "Value": "DigiKey",
+          "ProductCount": 4644
+        },
+        {
+          "Id": 1661,
+          "Value": "Digital Six Labs",
+          "ProductCount": 3
+        },
+        {
+          "Id": 600448,
+          "Value": "Digiwave",
+          "ProductCount": 106
+        },
+        {
+          "Id": 5239,
+          "Value": "DINKLE Corporation USA",
+          "ProductCount": 63
+        },
+        {
+          "Id": 2861,
+          "Value": "Dinkle Corporation, USA",
+          "ProductCount": 1435
+        },
+        {
+          "Id": 4761,
+          "Value": "DIT",
+          "ProductCount": 15
+        },
+        {
+          "Id": 5622,
+          "Value": "DLK Electronics",
+          "ProductCount": 216
+        },
+        {
+          "Id": 6358,
+          "Value": "Dylan Innovations",
+          "ProductCount": 7
+        },
+        {
+          "Id": 601656,
+          "Value": "Dynacom",
+          "ProductCount": 5
+        },
+        {
+          "Id": 5413,
+          "Value": "E Connector Solutions",
+          "ProductCount": 6495
+        },
+        {
+          "Id": 141,
+          "Value": "E-Switch",
+          "ProductCount": 8
+        },
+        {
+          "Id": 302,
+          "Value": "E-T-A",
+          "ProductCount": 20
+        },
+        {
+          "Id": 6057,
+          "Value": "E-tec Interconnect AG",
+          "ProductCount": 2
+        },
+        {
+          "Id": 461,
+          "Value": "E-Z-Hook",
+          "ProductCount": 109
+        },
+        {
+          "Id": 1948,
+          "Value": "EAO",
+          "ProductCount": 8
+        },
+        {
+          "Id": 4627,
+          "Value": "Ease Electronics",
+          "ProductCount": 1066
+        },
+        {
+          "Id": 2041,
+          "Value": "Eaton - Bussmann Electrical Division",
+          "ProductCount": 1406
+        },
+        {
+          "Id": 283,
+          "Value": "Eaton - Electronics Division",
+          "ProductCount": 4753
+        },
+        {
+          "Id": 5730,
+          "Value": "Eaton Electrical",
+          "ProductCount": 342
+        },
+        {
+          "Id": 95,
+          "Value": "Eaton Tripp Lite",
+          "ProductCount": 269
+        },
+        {
+          "Id": 6215,
+          "Value": "Eaton Wiring Devices",
+          "ProductCount": 2600
+        },
+        {
+          "Id": 3235,
+          "Value": "Eclipse Tools",
+          "ProductCount": 195
+        },
+        {
+          "Id": 151,
+          "Value": "EDAC Inc.",
+          "ProductCount": 514236
+        },
+        {
+          "Id": 602488,
+          "Value": "Elector Adaptor",
+          "ProductCount": 2
+        },
+        {
+          "Id": 5404,
+          "Value": "Electro Terminal GmbH & Co KG",
+          "ProductCount": 1
+        },
+        {
+          "Id": 600431,
+          "Value": "ElectronicMaster",
+          "ProductCount": 48
+        },
+        {
+          "Id": 6414,
+          "Value": "ELEGRP",
+          "ProductCount": 5
+        },
+        {
+          "Id": 602253,
+          "Value": "Ella Engineering",
+          "ProductCount": 2
+        },
+        {
+          "Id": 4388,
+          "Value": "Elpress Inc.",
+          "ProductCount": 302
+        },
+        {
+          "Id": 6025,
+          "Value": "emcfixSHOP",
+          "ProductCount": 2
+        },
+        {
+          "Id": 4414,
+          "Value": "Encitech Connectors AB",
+          "ProductCount": 348
+        },
+        {
+          "Id": 6135,
+          "Value": "Encore Wire",
+          "ProductCount": 1
+        },
+        {
+          "Id": 6110,
+          "Value": "ept, inc",
+          "ProductCount": 321
+        },
+        {
+          "Id": 2082,
+          "Value": "Essentra Access Solutions",
+          "ProductCount": 18
+        },
+        {
+          "Id": 145,
+          "Value": "Essentra Components",
+          "ProductCount": 106
+        },
+        {
+          "Id": 602474,
+          "Value": "euro-block",
+          "ProductCount": 32
+        },
+        {
+          "Id": 5328,
+          "Value": "Fairview Microwave",
+          "ProductCount": 3049
+        },
+        {
+          "Id": 4605,
+          "Value": "Famatel USA",
+          "ProductCount": 49
+        },
+        {
+          "Id": 601785,
+          "Value": "Fastener Specialty",
+          "ProductCount": 1
+        },
+        {
+          "Id": 827,
+          "Value": "FCI Deutschland GmbH",
+          "ProductCount": 35
+        },
+        {
+          "Id": 2171,
+          "Value": "Festo Corporation",
+          "ProductCount": 103
+        },
+        {
+          "Id": 2066,
+          "Value": "Finder Relays, Inc.",
+          "ProductCount": 7
+        },
+        {
+          "Id": 4829,
+          "Value": "Finecables",
+          "ProductCount": 5
+        },
+        {
+          "Id": 602045,
+          "Value": "Firecomms",
+          "ProductCount": 9
+        },
+        {
+          "Id": 5496,
+          "Value": "Fischer Elektronik",
+          "ProductCount": 41933
+        },
+        {
+          "Id": 601965,
+          "Value": "Flexcon Test Connectors",
+          "ProductCount": 2
+        },
+        {
+          "Id": 614,
+          "Value": "Fluke Electronics",
+          "ProductCount": 5
+        },
+        {
+          "Id": 1986,
+          "Value": "Fluke Networks",
+          "ProductCount": 10
+        },
+        {
+          "Id": 5945,
+          "Value": "Fujicon",
+          "ProductCount": 18
+        },
+        {
+          "Id": 2807,
+          "Value": "Gamma Electronics",
+          "ProductCount": 5
+        },
+        {
+          "Id": 600884,
+          "Value": "Gardner Bender",
+          "ProductCount": 22
+        },
+        {
+          "Id": 183,
+          "Value": "GC Electronics",
+          "ProductCount": 29
+        },
+        {
+          "Id": 2072,
+          "Value": "GCT",
+          "ProductCount": 3136
+        },
+        {
+          "Id": 2961,
+          "Value": "GES High Voltage",
+          "ProductCount": 53
+        },
+        {
+          "Id": 1711,
+          "Value": "GHI Electronics, LLC",
+          "ProductCount": 2
+        },
+        {
+          "Id": 600439,
+          "Value": "Giovenzana",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1448,
+          "Value": "Glenair",
+          "ProductCount": 1110076
+        },
+        {
+          "Id": 1939,
+          "Value": "GlobTek, Inc.",
+          "ProductCount": 101
+        },
+        {
+          "Id": 136,
+          "Value": "Grayhill Inc.",
+          "ProductCount": 27
+        },
+        {
+          "Id": 4217,
+          "Value": "Greenconn",
+          "ProductCount": 8857
+        },
+        {
+          "Id": 131,
+          "Value": "Greenlee Communications",
+          "ProductCount": 211
+        },
+        {
+          "Id": 5843,
+          "Value": "HALO Electronics, Inc.",
+          "ProductCount": 618
+        },
+        {
+          "Id": 1195,
+          "Value": "HARTING",
+          "ProductCount": 16951
+        },
+        {
+          "Id": 952,
+          "Value": "Harwin Inc.",
+          "ProductCount": 10299
+        },
+        {
+          "Id": 1436,
+          "Value": "HellermannTyton",
+          "ProductCount": 299
+        },
+        {
+          "Id": 3720,
+          "Value": "Heyco Products Corporation",
+          "ProductCount": 279
+        },
+        {
+          "Id": 602243,
+          "Value": "Hirelco",
+          "ProductCount": 2
+        },
+        {
+          "Id": 26,
+          "Value": "Hirose Electric Co Ltd",
+          "ProductCount": 25298
+        },
+        {
+          "Id": 1797,
+          "Value": "Hirschmann",
+          "ProductCount": 36
+        },
+        {
+          "Id": 1976,
+          "Value": "HMS Networks",
+          "ProductCount": 3
+        },
+        {
+          "Id": 602382,
+          "Value": "Hoff-Trex®",
+          "ProductCount": 579
+        },
+        {
+          "Id": 1441,
+          "Value": "Hoffman Enclosures, Inc.",
+          "ProductCount": 6
+        },
+        {
+          "Id": 3608,
+          "Value": "HOMEVISION TECHNOLOGY INC",
+          "ProductCount": 29
+        },
+        {
+          "Id": 602129,
+          "Value": "Honda Connector",
+          "ProductCount": 8
+        },
+        {
+          "Id": 1566,
+          "Value": "Honeywell Sensing and Productivity Solutions T&M",
+          "ProductCount": 5
+        },
+        {
+          "Id": 602339,
+          "Value": "HTP",
+          "ProductCount": 16
+        },
+        {
+          "Id": 3628,
+          "Value": "Huber+Suhner, Inc.",
+          "ProductCount": 2092
+        },
+        {
+          "Id": 2244,
+          "Value": "HVM Technology, Inc.",
+          "ProductCount": 2
+        },
+        {
+          "Id": 602162,
+          "Value": "HVTG",
+          "ProductCount": 1
+        },
+        {
+          "Id": 4968,
+          "Value": "Hyperline",
+          "ProductCount": 54
+        },
+        {
+          "Id": 5378,
+          "Value": "I-PEX",
+          "ProductCount": 315
+        },
+        {
+          "Id": 3833,
+          "Value": "ICOMTECH, INC.",
+          "ProductCount": 3
+        },
+        {
+          "Id": 4529,
+          "Value": "iCONN Systems LLC",
+          "ProductCount": 329
+        },
+        {
+          "Id": 602077,
+          "Value": "Icotronix",
+          "ProductCount": 19
+        },
+        {
+          "Id": 1885,
+          "Value": "IDEC",
+          "ProductCount": 317
+        },
+        {
+          "Id": 2330,
+          "Value": "ifm efector, inc.",
+          "ProductCount": 99
+        },
+        {
+          "Id": 5449,
+          "Value": "Image Quality Labs, Inc.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 107,
+          "Value": "Industrial Fiber Optics",
+          "ProductCount": 15
+        },
+        {
+          "Id": 2198,
+          "Value": "Industrial Shields",
+          "ProductCount": 2
+        },
+        {
+          "Id": 2371,
+          "Value": "IndustrialeMart",
+          "ProductCount": 2
+        },
+        {
+          "Id": 5472,
+          "Value": "Intellinet Network Solutions",
+          "ProductCount": 18
+        },
+        {
+          "Id": 2710,
+          "Value": "Interpower",
+          "ProductCount": 41
+        },
+        {
+          "Id": 1937,
+          "Value": "IO Audio Technologies",
+          "ProductCount": 99
+        },
+        {
+          "Id": 2248,
+          "Value": "IRISO USA Inc.",
+          "ProductCount": 585
+        },
+        {
+          "Id": 4629,
+          "Value": "Ironwood Electronics",
+          "ProductCount": 12
+        },
+        {
+          "Id": 600341,
+          "Value": "ISC Engineering",
+          "ProductCount": 35
+        },
+        {
+          "Id": 2685,
+          "Value": "ISL Products International",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1003,
+          "Value": "ITT Cannon, LLC",
+          "ProductCount": 101033
+        },
+        {
+          "Id": 1408,
+          "Value": "ITT VEAM",
+          "ProductCount": 222
+        },
+        {
+          "Id": 5454,
+          "Value": "iWave Global",
+          "ProductCount": 1
+        },
+        {
+          "Id": 238,
+          "Value": "IXYS",
+          "ProductCount": 8
+        },
+        {
+          "Id": 602489,
+          "Value": "J-tech Inc.",
+          "ProductCount": 5
+        },
+        {
+          "Id": 2291,
+          "Value": "Jacob GmbH",
+          "ProductCount": 4
+        },
+        {
+          "Id": 670,
+          "Value": "JAE Electronics",
+          "ProductCount": 5183
+        },
+        {
+          "Id": 4285,
+          "Value": "JAM",
+          "ProductCount": 685
+        },
+        {
+          "Id": 602402,
+          "Value": "Jameco BenchPro",
+          "ProductCount": 10
+        },
+        {
+          "Id": 602401,
+          "Value": "Jameco ValuePro",
+          "ProductCount": 9
+        },
+        {
+          "Id": 4034,
+          "Value": "JC Antenna",
+          "ProductCount": 7
+        },
+        {
+          "Id": 6282,
+          "Value": "JEFA Tech",
+          "ProductCount": 1
+        },
+        {
+          "Id": 6305,
+          "Value": "JITE",
+          "ProductCount": 5
+        },
+        {
+          "Id": 289,
+          "Value": "JKL Components Corp.",
+          "ProductCount": 3
+        },
+        {
+          "Id": 601992,
+          "Value": "Jokari",
+          "ProductCount": 5
+        },
+        {
+          "Id": 40,
+          "Value": "Jonard Tools",
+          "ProductCount": 46
+        },
+        {
+          "Id": 5448,
+          "Value": "Joymax Electronics",
+          "ProductCount": 27
+        },
+        {
+          "Id": 3937,
+          "Value": "JRH Electronics",
+          "ProductCount": 1
+        },
+        {
+          "Id": 455,
+          "Value": "JST Sales America Inc.",
+          "ProductCount": 6788
+        },
+        {
+          "Id": 5229,
+          "Value": "Kable Kontrol",
+          "ProductCount": 78
+        },
+        {
+          "Id": 600259,
+          "Value": "Kacon",
+          "ProductCount": 30
+        },
+        {
+          "Id": 5912,
+          "Value": "KaiFeng Electronics",
+          "ProductCount": 217
+        },
+        {
+          "Id": 6256,
+          "Value": "KEL USA",
+          "ProductCount": 188
+        },
+        {
+          "Id": 399,
+          "Value": "KEMET",
+          "ProductCount": 26
+        },
+        {
+          "Id": 36,
+          "Value": "Keystone Electronics",
+          "ProductCount": 1911
+        },
+        {
+          "Id": 2064,
+          "Value": "Khadas",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1927,
+          "Value": "Kitronik Ltd.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1742,
+          "Value": "Klein Tools, Inc.",
+          "ProductCount": 36
+        },
+        {
+          "Id": 2172,
+          "Value": "Knipex Tools LP",
+          "ProductCount": 39
+        },
+        {
+          "Id": 5055,
+          "Value": "KOINO",
+          "ProductCount": 81
+        },
+        {
+          "Id": 4789,
+          "Value": "Konnect RF",
+          "ProductCount": 3
+        },
+        {
+          "Id": 2092,
+          "Value": "Kycon, Inc.",
+          "ProductCount": 1555
+        },
+        {
+          "Id": 478,
+          "Value": "KYOCERA AVX",
+          "ProductCount": 6557
+        },
+        {
+          "Id": 5073,
+          "Value": "L-com",
+          "ProductCount": 3274
+        },
+        {
+          "Id": 6354,
+          "Value": "Lantronix Canada ULC",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1829,
+          "Value": "Lantronix, Inc.",
+          "ProductCount": 2
+        },
+        {
+          "Id": 2181,
+          "Value": "LAPP",
+          "ProductCount": 2264
+        },
+        {
+          "Id": 4190,
+          "Value": "LEADER SOLAR CABLE AND CONNECTOR",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1798,
+          "Value": "Leader Tech Inc.",
+          "ProductCount": 513
+        },
+        {
+          "Id": 2712,
+          "Value": "LED Lighting Inc",
+          "ProductCount": 1
+        },
+        {
+          "Id": 6334,
+          "Value": "LEI Indias",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1124,
+          "Value": "LEMO",
+          "ProductCount": 15228
+        },
+        {
+          "Id": 6167,
+          "Value": "LiConn, Inc.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2868,
+          "Value": "Lighthorse Technologies, Inc",
+          "ProductCount": 46
+        },
+        {
+          "Id": 5149,
+          "Value": "Linkplex",
+          "ProductCount": 140
+        },
+        {
+          "Id": 3963,
+          "Value": "Littelfuse Aerospace",
+          "ProductCount": 1119
+        },
+        {
+          "Id": 18,
+          "Value": "Littelfuse Inc.",
+          "ProductCount": 265
+        },
+        {
+          "Id": 5346,
+          "Value": "Littelfuse/Commercial Vehicle Products",
+          "ProductCount": 202
+        },
+        {
+          "Id": 309,
+          "Value": "Logical Systems Inc.",
+          "ProductCount": 4
+        },
+        {
+          "Id": 3126,
+          "Value": "LOTES",
+          "ProductCount": 4
+        },
+        {
+          "Id": 1794,
+          "Value": "Lumberg Automation",
+          "ProductCount": 664
+        },
+        {
+          "Id": 5405,
+          "Value": "Lumberg Inc",
+          "ProductCount": 511
+        },
+        {
+          "Id": 2221,
+          "Value": "M5Stack Technology Co., Ltd.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2611,
+          "Value": "Major League Electronics",
+          "ProductCount": 276
+        },
+        {
+          "Id": 1910,
+          "Value": "Maker Emporium Ltd",
+          "ProductCount": 9
+        },
+        {
+          "Id": 5268,
+          "Value": "Marutsuelec",
+          "ProductCount": 121
+        },
+        {
+          "Id": 1796,
+          "Value": "Marutsuelec Co., Ltd.",
+          "ProductCount": 6
+        },
+        {
+          "Id": 133,
+          "Value": "Master Appliance Co",
+          "ProductCount": 116
+        },
+        {
+          "Id": 5383,
+          "Value": "Maury Microwave",
+          "ProductCount": 73
+        },
+        {
+          "Id": 4613,
+          "Value": "McGill Microwave Systems",
+          "ProductCount": 6
+        },
+        {
+          "Id": 1866,
+          "Value": "MEAN WELL USA Inc.",
+          "ProductCount": 144
+        },
+        {
+          "Id": 4224,
+          "Value": "Meltric",
+          "ProductCount": 100
+        },
+        {
+          "Id": 602345,
+          "Value": "Menbers",
+          "ProductCount": 126
+        },
+        {
+          "Id": 154,
+          "Value": "MENDA",
+          "ProductCount": 40
+        },
+        {
+          "Id": 2378,
+          "Value": "Mersen USA Newburyport-MA L.L.C.",
+          "ProductCount": 536
+        },
+        {
+          "Id": 5358,
+          "Value": "Metcal",
+          "ProductCount": 4
+        },
+        {
+          "Id": 1849,
+          "Value": "METZ CONNECT USA Inc.",
+          "ProductCount": 1915
+        },
+        {
+          "Id": 4672,
+          "Value": "MH Connectors",
+          "ProductCount": 589
+        },
+        {
+          "Id": 2768,
+          "Value": "Micro Connectors, Inc.",
+          "ProductCount": 89
+        },
+        {
+          "Id": 5505,
+          "Value": "Micro-Mode",
+          "ProductCount": 131
+        },
+        {
+          "Id": 1471,
+          "Value": "MikroElektronika",
+          "ProductCount": 8
+        },
+        {
+          "Id": 54,
+          "Value": "Mill-Max Manufacturing Corp.",
+          "ProductCount": 37971
+        },
+        {
+          "Id": 6081,
+          "Value": "Millimeter Wave Technologies",
+          "ProductCount": 63
+        },
+        {
+          "Id": 5705,
+          "Value": "Milliohm Electronics",
+          "ProductCount": 18
+        },
+        {
+          "Id": 602349,
+          "Value": "Milnec",
+          "ProductCount": 190647
+        },
+        {
+          "Id": 3942,
+          "Value": "Milspecwest, LLC",
+          "ProductCount": 727
+        },
+        {
+          "Id": 3157,
+          "Value": "Mini-Circuits",
+          "ProductCount": 132
+        },
+        {
+          "Id": 602370,
+          "Value": "MiS Technologies",
+          "ProductCount": 2
+        },
+        {
+          "Id": 2508,
+          "Value": "Mitsumi",
+          "ProductCount": 26
+        },
+        {
+          "Id": 23,
+          "Value": "Molex",
+          "ProductCount": 83456
+        },
+        {
+          "Id": 4134,
+          "Value": "Molex",
+          "ProductCount": 42
+        },
+        {
+          "Id": 600362,
+          "Value": "Moxa",
+          "ProductCount": 6
+        },
+        {
+          "Id": 61,
+          "Value": "MPD (Memory Protection Devices)",
+          "ProductCount": 22
+        },
+        {
+          "Id": 602113,
+          "Value": "MPD Digital",
+          "ProductCount": 8
+        },
+        {
+          "Id": 314,
+          "Value": "Mueller Electric Co",
+          "ProductCount": 577
+        },
+        {
+          "Id": 3585,
+          "Value": "Multilane",
+          "ProductCount": 42
+        },
+        {
+          "Id": 490,
+          "Value": "Murata Electronics",
+          "ProductCount": 65
+        },
+        {
+          "Id": 811,
+          "Value": "Murata Power Solutions Inc.",
+          "ProductCount": 3
+        },
+        {
+          "Id": 5088,
+          "Value": "Murrelektronik, Inc",
+          "ProductCount": 136
+        },
+        {
+          "Id": 2160,
+          "Value": "Murrplastik Systems, Inc.",
+          "ProductCount": 114
+        },
+        {
+          "Id": 5600,
+          "Value": "My Cable Mart",
+          "ProductCount": 399
+        },
+        {
+          "Id": 2247,
+          "Value": "Nanmac",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5517,
+          "Value": "NavePoint",
+          "ProductCount": 209
+        },
+        {
+          "Id": 600148,
+          "Value": "Neutrik",
+          "ProductCount": 592
+        },
+        {
+          "Id": 6473,
+          "Value": "Neutrik Americas, Inc.",
+          "ProductCount": 1095
+        },
+        {
+          "Id": 4186,
+          "Value": "Newnex",
+          "ProductCount": 11
+        },
+        {
+          "Id": 3679,
+          "Value": "Nextron",
+          "ProductCount": 25
+        },
+        {
+          "Id": 2770,
+          "Value": "NI",
+          "ProductCount": 34
+        },
+        {
+          "Id": 2645,
+          "Value": "Nicomatic",
+          "ProductCount": 31
+        },
+        {
+          "Id": 37,
+          "Value": "NorComp Inc.",
+          "ProductCount": 7589
+        },
+        {
+          "Id": 6022,
+          "Value": "Northern Technologies",
+          "ProductCount": 160
+        },
+        {
+          "Id": 3661,
+          "Value": "nVent",
+          "ProductCount": 5
+        },
+        {
+          "Id": 4040,
+          "Value": "NVT Phybridge",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1907,
+          "Value": "ODU",
+          "ProductCount": 20887
+        },
+        {
+          "Id": 273,
+          "Value": "Ohmite",
+          "ProductCount": 22
+        },
+        {
+          "Id": 1188,
+          "Value": "Olimex LTD",
+          "ProductCount": 29
+        },
+        {
+          "Id": 5880,
+          "Value": "Omega",
+          "ProductCount": 322
+        },
+        {
+          "Id": 2262,
+          "Value": "Omnetics",
+          "ProductCount": 799
+        },
+        {
+          "Id": 555,
+          "Value": "OmniOn Power™",
+          "ProductCount": 2
+        },
+        {
+          "Id": 236,
+          "Value": "Omron Automation and Safety",
+          "ProductCount": 562
+        },
+        {
+          "Id": 39,
+          "Value": "Omron Electronics Inc-EMC Div",
+          "ProductCount": 1867
+        },
+        {
+          "Id": 52,
+          "Value": "On Shore Technology Inc.",
+          "ProductCount": 11544
+        },
+        {
+          "Id": 4899,
+          "Value": "Optix America",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5528,
+          "Value": "Opto 22",
+          "ProductCount": 5
+        },
+        {
+          "Id": 600499,
+          "Value": "ORing Networking",
+          "ProductCount": 2
+        },
+        {
+          "Id": 2234,
+          "Value": "OSEPP Electronics LTD",
+          "ProductCount": 2
+        },
+        {
+          "Id": 5615,
+          "Value": "Ouneva",
+          "ProductCount": 89
+        },
+        {
+          "Id": 2553,
+          "Value": "Oupiin",
+          "ProductCount": 976
+        },
+        {
+          "Id": 4985,
+          "Value": "Oupiin",
+          "ProductCount": 857
+        },
+        {
+          "Id": 4081,
+          "Value": "P1 Technologies",
+          "ProductCount": 61
+        },
+        {
+          "Id": 3648,
+          "Value": "P1dB Inc",
+          "ProductCount": 31
+        },
+        {
+          "Id": 255,
+          "Value": "Panasonic Electric Works",
+          "ProductCount": 2297
+        },
+        {
+          "Id": 1110,
+          "Value": "Panasonic Industrial Automation Sales",
+          "ProductCount": 20
+        },
+        {
+          "Id": 10,
+          "Value": "Panasonic Industry",
+          "ProductCount": 1
+        },
+        {
+          "Id": 298,
+          "Value": "Panduit Corp",
+          "ProductCount": 8889
+        },
+        {
+          "Id": 149,
+          "Value": "Parallax Inc.",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1944,
+          "Value": "Parker Chomerics",
+          "ProductCount": 1
+        },
+        {
+          "Id": 3985,
+          "Value": "Pasternack",
+          "ProductCount": 3958
+        },
+        {
+          "Id": 601790,
+          "Value": "Patton Electronics",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2403,
+          "Value": "PEI-Genesis",
+          "ProductCount": 682
+        },
+        {
+          "Id": 3250,
+          "Value": "Peplink",
+          "ProductCount": 3
+        },
+        {
+          "Id": 2046,
+          "Value": "Pepperl+Fuchs, Inc.",
+          "ProductCount": 103
+        },
+        {
+          "Id": 277,
+          "Value": "Phoenix Contact",
+          "ProductCount": 37544
+        },
+        {
+          "Id": 2183,
+          "Value": "Pololu",
+          "ProductCount": 129
+        },
+        {
+          "Id": 501,
+          "Value": "Pomona Electronics",
+          "ProductCount": 938
+        },
+        {
+          "Id": 600081,
+          "Value": "Positronic",
+          "ProductCount": 416
+        },
+        {
+          "Id": 2668,
+          "Value": "Power Dynamics, Inc.",
+          "ProductCount": 176
+        },
+        {
+          "Id": 3426,
+          "Value": "Powerbx Inc.",
+          "ProductCount": 3
+        },
+        {
+          "Id": 4131,
+          "Value": "Powertronics",
+          "ProductCount": 49
+        },
+        {
+          "Id": 1212,
+          "Value": "Preci-Dip",
+          "ProductCount": 31096
+        },
+        {
+          "Id": 6496,
+          "Value": "Prodaconn",
+          "ProductCount": 9
+        },
+        {
+          "Id": 602461,
+          "Value": "Protective Closures",
+          "ProductCount": 86
+        },
+        {
+          "Id": 3505,
+          "Value": "PT Speed",
+          "ProductCount": 20
+        },
+        {
+          "Id": 5294,
+          "Value": "PTR Hartmann",
+          "ProductCount": 160
+        },
+        {
+          "Id": 553,
+          "Value": "Pulse Electronics",
+          "ProductCount": 1020
+        },
+        {
+          "Id": 189,
+          "Value": "Qualtek",
+          "ProductCount": 220
+        },
+        {
+          "Id": 601915,
+          "Value": "Quell",
+          "ProductCount": 29512
+        },
+        {
+          "Id": 2229,
+          "Value": "Quest Technology International Inc.",
+          "ProductCount": 175
+        },
+        {
+          "Id": 2201,
+          "Value": "Radiall USA, Inc.",
+          "ProductCount": 10601
+        },
+        {
+          "Id": 1772,
+          "Value": "RAF Electronic Hardware",
+          "ProductCount": 13
+        },
+        {
+          "Id": 1715,
+          "Value": "RAFI",
+          "ProductCount": 13
+        },
+        {
+          "Id": 2151,
+          "Value": "Raltron Electronics",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1690,
+          "Value": "Raspberry Pi",
+          "ProductCount": 3
+        },
+        {
+          "Id": 601349,
+          "Value": "Raychem",
+          "ProductCount": 5
+        },
+        {
+          "Id": 2326,
+          "Value": "RDI, Inc.",
+          "ProductCount": 24
+        },
+        {
+          "Id": 6044,
+          "Value": "Recodeal",
+          "ProductCount": 3
+        },
+        {
+          "Id": 68,
+          "Value": "Red Lion Controls",
+          "ProductCount": 18
+        },
+        {
+          "Id": 4915,
+          "Value": "Reliance North America",
+          "ProductCount": 16790
+        },
+        {
+          "Id": 2328,
+          "Value": "Remington Industries",
+          "ProductCount": 84
+        },
+        {
+          "Id": 3100,
+          "Value": "Rennsteig Tools, Inc.",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2737,
+          "Value": "RF Industries",
+          "ProductCount": 833
+        },
+        {
+          "Id": 5480,
+          "Value": "RF Industries",
+          "ProductCount": 8
+        },
+        {
+          "Id": 357,
+          "Value": "RF Solutions",
+          "ProductCount": 70
+        },
+        {
+          "Id": 601750,
+          "Value": "Rich Bay",
+          "ProductCount": 31
+        },
+        {
+          "Id": 5385,
+          "Value": "Rittal",
+          "ProductCount": 8
+        },
+        {
+          "Id": 601786,
+          "Value": "RMS",
+          "ProductCount": 15
+        },
+        {
+          "Id": 1868,
+          "Value": "Rosenberger",
+          "ProductCount": 1095
+        },
+        {
+          "Id": 2760,
+          "Value": "Russtech Engineering",
+          "ProductCount": 96
+        },
+        {
+          "Id": 2223,
+          "Value": "Same Sky (Formerly CUI Devices)",
+          "ProductCount": 4005
+        },
+        {
+          "Id": 612,
+          "Value": "Samtec Inc.",
+          "ProductCount": 573680
+        },
+        {
+          "Id": 2981,
+          "Value": "Sanoxy",
+          "ProductCount": 142
+        },
+        {
+          "Id": 5746,
+          "Value": "Sauro Electronic Connectors",
+          "ProductCount": 1053
+        },
+        {
+          "Id": 600209,
+          "Value": "Scame",
+          "ProductCount": 26
+        },
+        {
+          "Id": 5516,
+          "Value": "Schaltbau",
+          "ProductCount": 61
+        },
+        {
+          "Id": 1988,
+          "Value": "Schmartboard, Inc.",
+          "ProductCount": 30
+        },
+        {
+          "Id": 4008,
+          "Value": "Schneider Electric",
+          "ProductCount": 708
+        },
+        {
+          "Id": 1439,
+          "Value": "Schroff",
+          "ProductCount": 2
+        },
+        {
+          "Id": 486,
+          "Value": "SCHURTER Inc.",
+          "ProductCount": 3606
+        },
+        {
+          "Id": 1569,
+          "Value": "SCS",
+          "ProductCount": 20
+        },
+        {
+          "Id": 3445,
+          "Value": "Sealing Devices, Inc",
+          "ProductCount": 7
+        },
+        {
+          "Id": 1597,
+          "Value": "Seeed Technology Co., Ltd",
+          "ProductCount": 22
+        },
+        {
+          "Id": 6207,
+          "Value": "Sensata-BEI Encoders",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1724,
+          "Value": "Sensata-BEI Sensors",
+          "ProductCount": 2
+        },
+        {
+          "Id": 601880,
+          "Value": "Shanghai Linsky Electrical Co Ltd",
+          "ProductCount": 1
+        },
+        {
+          "Id": 4916,
+          "Value": "Shaxon",
+          "ProductCount": 9
+        },
+        {
+          "Id": 6033,
+          "Value": "Shelly USA",
+          "ProductCount": 1
+        },
+        {
+          "Id": 4251,
+          "Value": "Shenzhen ADTEK Technology Co., Ltd",
+          "ProductCount": 6
+        },
+        {
+          "Id": 1882,
+          "Value": "SICK, Inc.",
+          "ProductCount": 138
+        },
+        {
+          "Id": 3473,
+          "Value": "Siemens",
+          "ProductCount": 108
+        },
+        {
+          "Id": 2543,
+          "Value": "Sifam Tinsley Instrumentation Inc",
+          "ProductCount": 1
+        },
+        {
+          "Id": 6294,
+          "Value": "Sigatek",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5466,
+          "Value": "Signal Microwave",
+          "ProductCount": 22
+        },
+        {
+          "Id": 601878,
+          "Value": "Simply45",
+          "ProductCount": 37
+        },
+        {
+          "Id": 2960,
+          "Value": "SINBON",
+          "ProductCount": 1
+        },
+        {
+          "Id": 275,
+          "Value": "Singatron Enterprises Co Ltd",
+          "ProductCount": 2
+        },
+        {
+          "Id": 1679,
+          "Value": "Siretta Ltd",
+          "ProductCount": 43
+        },
+        {
+          "Id": 5032,
+          "Value": "Soldered Electronics",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5527,
+          "Value": "SOMMER CABLE",
+          "ProductCount": 102
+        },
+        {
+          "Id": 666,
+          "Value": "Souriau-Sunbank by Eaton",
+          "ProductCount": 27823
+        },
+        {
+          "Id": 2564,
+          "Value": "Southwire",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1568,
+          "Value": "SparkFun Electronics",
+          "ProductCount": 140
+        },
+        {
+          "Id": 602246,
+          "Value": "SPI Connects",
+          "ProductCount": 78581
+        },
+        {
+          "Id": 452,
+          "Value": "Staco Energy Products Company",
+          "ProductCount": 2
+        },
+        {
+          "Id": 5214,
+          "Value": "StarTech.com",
+          "ProductCount": 54
+        },
+        {
+          "Id": 601787,
+          "Value": "Step'n Components",
+          "ProductCount": 16
+        },
+        {
+          "Id": 380,
+          "Value": "Stewart Connector",
+          "ProductCount": 906
+        },
+        {
+          "Id": 35,
+          "Value": "Sullins Connector Solutions",
+          "ProductCount": 175883
+        },
+        {
+          "Id": 2388,
+          "Value": "Suntsu Electronics, Inc",
+          "ProductCount": 49
+        },
+        {
+          "Id": 5173,
+          "Value": "Suntsu Electronics, Inc",
+          "ProductCount": 10
+        },
+        {
+          "Id": 4324,
+          "Value": "SUPERIOR TECH",
+          "ProductCount": 58
+        },
+        {
+          "Id": 4661,
+          "Value": "Supirit Inc.",
+          "ProductCount": 4
+        },
+        {
+          "Id": 5761,
+          "Value": "Supreme Edgelight Devices",
+          "ProductCount": 2
+        },
+        {
+          "Id": 600256,
+          "Value": "Sure-Seal Connections",
+          "ProductCount": 123
+        },
+        {
+          "Id": 2299,
+          "Value": "Switch Components",
+          "ProductCount": 28
+        },
+        {
+          "Id": 137,
+          "Value": "Switchcraft Inc.",
+          "ProductCount": 2867
+        },
+        {
+          "Id": 600215,
+          "Value": "SYS TEC electronic",
+          "ProductCount": 1
+        },
+        {
+          "Id": 5372,
+          "Value": "Syston",
+          "ProductCount": 4
+        },
+        {
+          "Id": 132,
+          "Value": "Tamura",
+          "ProductCount": 33
+        },
+        {
+          "Id": 931,
+          "Value": "Taoglas Limited",
+          "ProductCount": 247
+        },
+        {
+          "Id": 445,
+          "Value": "TDK",
+          "ProductCount": 77
+        },
+        {
+          "Id": 2585,
+          "Value": "TE - Kissling",
+          "ProductCount": 2
+        },
+        {
+          "Id": 2132,
+          "Value": "TE Application Tooling",
+          "ProductCount": 16
+        },
+        {
+          "Id": 994,
+          "Value": "TE Connectivity",
+          "ProductCount": 3841
+        },
+        {
+          "Id": 844,
+          "Value": "TE Connectivity Aerospace, Defense and Marine",
+          "ProductCount": 10528
+        },
+        {
+          "Id": 450,
+          "Value": "TE Connectivity ALCOSWITCH Switches",
+          "ProductCount": 2
+        },
+        {
+          "Id": 17,
+          "Value": "TE Connectivity AMP Connectors",
+          "ProductCount": 123365
+        },
+        {
+          "Id": 174,
+          "Value": "TE Connectivity Corcom Filters",
+          "ProductCount": 1007
+        },
+        {
+          "Id": 1508,
+          "Value": "TE Connectivity Deutsch Connectors",
+          "ProductCount": 85199
+        },
+        {
+          "Id": 2109,
+          "Value": "TE Connectivity ENTRELEC",
+          "ProductCount": 1088
+        },
+        {
+          "Id": 2684,
+          "Value": "TE Connectivity Erni",
+          "ProductCount": 1501
+        },
+        {
+          "Id": 343,
+          "Value": "TE Connectivity Linx",
+          "ProductCount": 519
+        },
+        {
+          "Id": 223,
+          "Value": "TE Connectivity Measurement Specialties",
+          "ProductCount": 36
+        },
+        {
+          "Id": 1712,
+          "Value": "TE Connectivity Passive Product",
+          "ProductCount": 18
+        },
+        {
+          "Id": 41,
+          "Value": "TE Connectivity Potter & Brumfield Relays",
+          "ProductCount": 255
+        },
+        {
+          "Id": 484,
+          "Value": "TE Connectivity Raychem Cable Protection",
+          "ProductCount": 2964
+        },
+        {
+          "Id": 817,
+          "Value": "TE Connectivity Schaffner",
+          "ProductCount": 1305
+        },
+        {
+          "Id": 2094,
+          "Value": "TE Energy & Utilities",
+          "ProductCount": 32
+        },
+        {
+          "Id": 2452,
+          "Value": "TE Intercontec",
+          "ProductCount": 1217
+        },
+        {
+          "Id": 2956,
+          "Value": "TechLogix Networx",
+          "ProductCount": 23
+        },
+        {
+          "Id": 600317,
+          "Value": "TekBox Digital Solutions Pte",
+          "ProductCount": 18
+        },
+        {
+          "Id": 4271,
+          "Value": "Telebyte",
+          "ProductCount": 1
+        },
+        {
+          "Id": 2269,
+          "Value": "Telegartner Inc",
+          "ProductCount": 799
+        },
+        {
+          "Id": 5452,
+          "Value": "Telemecanique Sensors",
+          "ProductCount": 26
+        },
+        {
+          "Id": 5935,
+          "Value": "TeleWire Tech",
+          "ProductCount": 50
+        },
+        {
+          "Id": 4703,
+          "Value": "Teltonika",
+          "ProductCount": 3
+        },
+        {
+          "Id": 2177,
+          "Value": "Tempo Communications",
+          "ProductCount": 57
+        },
+        {
+          "Id": 839,
+          "Value": "Tensility International Corp",
+          "ProductCount": 613
+        },
+        {
+          "Id": 296,
+          "Value": "Texas Instruments",
+          "ProductCount": 1
+        },
+        {
+          "Id": 4561,
+          "Value": "ThermoKonnect",
+          "ProductCount": 45
+        },
+        {
+          "Id": 1121,
+          "Value": "Thomas Research Products",
+          "ProductCount": 28
+        },
+        {
+          "Id": 6280,
+          "Value": "TOOLTRONICS INC",
+          "ProductCount": 3
+        },
+        {
+          "Id": 264,
+          "Value": "Toshiba Semiconductor and Storage",
+          "ProductCount": 4
+        },
+        {
+          "Id": 4335,
+          "Value": "Traktronix",
+          "ProductCount": 19
+        },
+        {
+          "Id": 1686,
+          "Value": "Trenz Electronic GmbH",
+          "ProductCount": 2
+        },
+        {
+          "Id": 601788,
+          "Value": "Tri-Star Electronics",
+          "ProductCount": 263
+        },
+        {
+          "Id": 600076,
+          "Value": "Triplett",
+          "ProductCount": 42
+        },
+        {
+          "Id": 2329,
+          "Value": "Triplett Test Equipment and Tools",
+          "ProductCount": 6
+        },
+        {
+          "Id": 4958,
+          "Value": "Triplett Test Equipment and Tools",
+          "ProductCount": 7
+        },
+        {
+          "Id": 1419,
+          "Value": "TRP Connector B.V.",
+          "ProductCount": 5
+        },
+        {
+          "Id": 600447,
+          "Value": "Turmode",
+          "ProductCount": 3
+        },
+        {
+          "Id": 410,
+          "Value": "Tusonix a Subsidiary of CTS Electronic Components",
+          "ProductCount": 30
+        },
+        {
+          "Id": 4912,
+          "Value": "TYCLON",
+          "ProductCount": 476
+        },
+        {
+          "Id": 2303,
+          "Value": "Tycon Systems Inc.",
+          "ProductCount": 5
+        },
+        {
+          "Id": 4359,
+          "Value": "UJU",
+          "ProductCount": 21
+        },
+        {
+          "Id": 2607,
+          "Value": "Ulti-Mate Connector Inc.",
+          "ProductCount": 2
+        },
+        {
+          "Id": 5181,
+          "Value": "UNC Group, LLC",
+          "ProductCount": 1
+        },
+        {
+          "Id": 601664,
+          "Value": "UPUN",
+          "ProductCount": 1
+        },
+        {
+          "Id": 44,
+          "Value": "Vector Electronics",
+          "ProductCount": 12
+        },
+        {
+          "Id": 600178,
+          "Value": "Velleman",
+          "ProductCount": 1
+        },
+        {
+          "Id": 1102,
+          "Value": "Vicor Corporation",
+          "ProductCount": 1
+        },
+        {
+          "Id": 5292,
+          "Value": "VIETES",
+          "ProductCount": 4
+        },
+        {
+          "Id": 541,
+          "Value": "Vishay Dale",
+          "ProductCount": 951
+        },
+        {
+          "Id": 62,
+          "Value": "Volgen + Furuno",
+          "ProductCount": 20
+        },
+        {
+          "Id": 2946,
+          "Value": "WAGO Corporation",
+          "ProductCount": 15565
+        },
+        {
+          "Id": 6090,
+          "Value": "WAIN Electrical",
+          "ProductCount": 26
+        },
+        {
+          "Id": 6270,
+          "Value": "Waldom",
+          "ProductCount": 3
+        },
+        {
+          "Id": 1292,
+          "Value": "Walsin Technology Corporation",
+          "ProductCount": 4
+        },
+        {
+          "Id": 6159,
+          "Value": "Walta",
+          "ProductCount": 34
+        },
+        {
+          "Id": 2266,
+          "Value": "WEC",
+          "ProductCount": 1826
+        },
+        {
+          "Id": 3072,
+          "Value": "WECO Electrical Connectors Inc.",
+          "ProductCount": 193
+        },
+        {
+          "Id": 5831,
+          "Value": "WEE",
+          "ProductCount": 3
+        },
+        {
+          "Id": 281,
+          "Value": "Weidmüller",
+          "ProductCount": 35566
+        },
+        {
+          "Id": 5040,
+          "Value": "Weipu Connector",
+          "ProductCount": 1044
+        },
+        {
+          "Id": 991,
+          "Value": "Winchester Interconnect",
+          "ProductCount": 184
+        },
+        {
+          "Id": 3546,
+          "Value": "WITHWAVE CO LTD",
+          "ProductCount": 327
+        },
+        {
+          "Id": 1278,
+          "Value": "WIZnet",
+          "ProductCount": 3
+        },
+        {
+          "Id": 600097,
+          "Value": "Woertz",
+          "ProductCount": 3
+        },
+        {
+          "Id": 5009,
+          "Value": "World Micro Inc",
+          "ProductCount": 37
+        },
+        {
+          "Id": 732,
+          "Value": "Würth Elektronik",
+          "ProductCount": 5676
+        },
+        {
+          "Id": 415,
+          "Value": "Xeltek Inc.",
+          "ProductCount": 4
+        },
+        {
+          "Id": 2840,
+          "Value": "XFMRS",
+          "ProductCount": 5
+        },
+        {
+          "Id": 1470,
+          "Value": "XP Power",
+          "ProductCount": 30
+        },
+        {
+          "Id": 2408,
+          "Value": "Yamaichi Electronics",
+          "ProductCount": 92
+        },
+        {
+          "Id": 2464,
+          "Value": "Yokowo",
+          "ProductCount": 10
+        },
+        {
+          "Id": 5364,
+          "Value": "Yonggui Electric",
+          "ProductCount": 1
+        },
+        {
+          "Id": 600329,
+          "Value": "Yuan Dean",
+          "ProductCount": 4
+        },
+        {
+          "Id": 3033,
+          "Value": "Z+F USA Inc",
+          "ProductCount": 30
+        },
+        {
+          "Id": 6522,
+          "Value": "Zippertubing",
+          "ProductCount": 1
+        },
+        {
+          "Id": 601900,
+          "Value": "Zoller & Fröhlich GmbH",
+          "ProductCount": 1
+        }
+      ],
+      "Packaging": null,
+      "Status": null,
+      "Series": null,
+      "ParametricFilters": null,
+      "TopCategories": null,
+      "MarketPlaceFilters": null
+    },
+    "SearchLocaleUsed": {
+      "Site": "US",
+      "Language": "en",
+      "Currency": "USD"
+    },
+    "AppliedParametricFiltersDto": []
+  }
+}
