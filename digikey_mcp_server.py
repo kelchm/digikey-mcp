@@ -6,6 +6,7 @@ import stat
 import difflib
 import logging
 import threading
+import urllib.parse
 from pathlib import Path
 from fastmcp import FastMCP
 from dotenv import load_dotenv
@@ -62,6 +63,12 @@ def _default_token_cache_path() -> Path:
 
 DIGIKEY_TOKEN_CACHE = Path(os.getenv("DIGIKEY_TOKEN_CACHE") or _default_token_cache_path())
 
+# Per-request timeout for every HTTP call to DigiKey. 30 s is generous for normal
+# operation (most calls complete in 1-2 s) but ensures a stuck endpoint can't
+# wedge the MCP server indefinitely — a tool call returning an exception is far
+# easier to recover from than a hung process.
+_REQUEST_TIMEOUT_SECS = int(os.getenv("DIGIKEY_HTTP_TIMEOUT_SECS", "30"))
+
 # Initialize FastMCP server
 mcp = FastMCP("DigiKey MCP Server")
 
@@ -80,7 +87,7 @@ def get_access_token():
     
     endpoint = "SANDBOX" if USE_SANDBOX else "PRODUCTION"
     logger.info(f"Requesting token from {endpoint} with CLIENT_ID: {CLIENT_ID[:10]}...")
-    resp = requests.post(TOKEN_URL, data=data, headers=headers)
+    resp = requests.post(TOKEN_URL, data=data, headers=headers, timeout=_REQUEST_TIMEOUT_SECS)
     
     if resp.status_code != 200:
         logger.error(f"OAuth error: {resp.status_code} - {resp.text}")
@@ -124,9 +131,9 @@ def _make_request(method: str, url: str, headers: dict, data: dict = None) -> di
         logger.debug(f"Request body: {json.dumps(data, indent=2)}")
     
     if method.upper() == "GET":
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT_SECS)
     else:
-        resp = requests.post(url, headers=headers, json=data)
+        resp = requests.post(url, headers=headers, json=data, timeout=_REQUEST_TIMEOUT_SECS)
     
     logger.info(f"Response status: {resp.status_code}")
     if resp.status_code != 200:
@@ -184,17 +191,25 @@ def _read_token_cache() -> dict | None:
 def _write_token_cache(state: dict) -> None:
     """Atomically persist tokens to the cache file with 0600 perms.
 
-    Failure here is non-fatal — DigiKey deployments without a writable cache path
+    os.open with mode=0o600 makes the kernel apply 0600 at creation, closing the
+    umask race that write_text + chmod has. O_TRUNC silently overwrites any stale
+    .tmp from a crashed prior writer — same single-process invariant as the
+    atomic os.replace below.
+
+    Failure is non-fatal — DigiKey deployments without a writable cache path
     still work for the life of the process; they just can't survive a restart.
     """
     global _TOKEN_CACHE_WRITE_OK
     try:
         DIGIKEY_TOKEN_CACHE.parent.mkdir(parents=True, exist_ok=True)
         tmp = DIGIKEY_TOKEN_CACHE.with_suffix(DIGIKEY_TOKEN_CACHE.suffix + ".tmp")
-        tmp.write_text(json.dumps(state, indent=2))
-        # Tighten perms before the rename so there's no window where the file is
-        # readable by other users.
-        tmp.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        fd = os.open(
+            tmp,
+            os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+            stat.S_IRUSR | stat.S_IWUSR,
+        )
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(state, indent=2))
         os.replace(tmp, DIGIKEY_TOKEN_CACHE)
         _TOKEN_CACHE_WRITE_OK = True
     except OSError as e:
@@ -226,6 +241,7 @@ def _refresh_user_access_token(refresh_token: str) -> dict:
     resp = requests.post(
         TOKEN_URL, data=data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=_REQUEST_TIMEOUT_SECS,
     )
     if resp.status_code != 200:
         # Surface DigiKey's error verbatim — 'invalid_grant' means the refresh token
@@ -302,7 +318,14 @@ def _make_user_request(method: str, url: str, data=None, params: dict = None) ->
     """
     headers = _get_user_headers()
     if params:
-        url = url + "?" + "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
+        # urlencode handles reserved chars properly (spaces, &, =, …); the prior
+        # f"{k}={v}" form silently produced malformed URLs for any value with
+        # special characters. doseq=False is fine — none of our params are lists.
+        encoded = urllib.parse.urlencode(
+            {k: v for k, v in params.items() if v is not None}
+        )
+        if encoded:
+            url = f"{url}?{encoded}"
 
     logger.info(f"Making {method} {url} (user-context)")
     if data is not None:
@@ -310,13 +333,13 @@ def _make_user_request(method: str, url: str, data=None, params: dict = None) ->
 
     method_upper = method.upper()
     if method_upper == "GET":
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT_SECS)
     elif method_upper == "DELETE":
-        resp = requests.delete(url, headers=headers)
+        resp = requests.delete(url, headers=headers, timeout=_REQUEST_TIMEOUT_SECS)
     elif method_upper == "POST":
-        resp = requests.post(url, headers=headers, json=data)
+        resp = requests.post(url, headers=headers, json=data, timeout=_REQUEST_TIMEOUT_SECS)
     elif method_upper == "PUT":
-        resp = requests.put(url, headers=headers, json=data)
+        resp = requests.put(url, headers=headers, json=data, timeout=_REQUEST_TIMEOUT_SECS)
     else:
         raise ValueError(f"Unsupported HTTP method: {method}")
 
@@ -1367,7 +1390,13 @@ def update_my_list_name(list_id: str, new_name: str):
         list_id: The list to rename.
         new_name: The new display name. Must be unique for the user.
     """
-    _make_user_request("PUT", f"{MYLISTS_BASE}/lists/{list_id}/listName/{new_name}")
+    # quote(safe="") percent-encodes everything except unreserved chars — names
+    # containing '/', '?', '#', or '%' get encoded rather than reinterpreted as
+    # URL syntax. Same applies to validate_my_list_name below.
+    _make_user_request(
+        "PUT",
+        f"{MYLISTS_BASE}/lists/{list_id}/listName/{urllib.parse.quote(new_name, safe='')}",
+    )
     return {"id": list_id, "list_name": new_name}
 
 
@@ -1378,7 +1407,10 @@ def validate_my_list_name(list_name: str):
     Args:
         list_name: Candidate name.
     """
-    return _make_user_request("GET", f"{MYLISTS_BASE}/lists/validate/{list_name}")
+    return _make_user_request(
+        "GET",
+        f"{MYLISTS_BASE}/lists/validate/{urllib.parse.quote(list_name, safe='')}",
+    )
 
 
 @_user_scoped_tool
@@ -1526,6 +1558,27 @@ def update_part_in_list(
     if not current_raw:
         raise ValueError(f"Part {unique_id!r} not found in list {list_id!r}")
 
+    # GET returns ListPartQuantity (QuantityRequested, PackOptions, …); PUT
+    # expects RequestedQuantity (Quantity, TargetPrice, SelectedPackType,
+    # SelectedSubPackType). A list part is one quantity in practice — the
+    # multi-entry case in the GET shape is DigiKey's pack-option state, not
+    # alternate quantities. Build one PUT-shape entry from the selected GET
+    # entry, with the new quantity if the caller provided one.
+    existing = current_raw.get("Quantities") or []
+    selected_idx = current_raw.get("SelectedQuantityIndex") or 0
+    src = existing[selected_idx] if 0 <= selected_idx < len(existing) else {}
+
+    put_quantity = {
+        "Quantity": int(quantity) if quantity is not None else int(src.get("QuantityRequested") or 1),
+    }
+    # Only echo back fields the GET actually had. Drop both None and "" — DigiKey
+    # uses "" as a sentinel for "no preference" on pack types, and echoing it
+    # back serves no purpose vs just omitting the key.
+    for k in ("TargetPrice", "SelectedPackType", "SelectedSubPackType"):
+        v = src.get(k)
+        if v:
+            put_quantity[k] = v
+
     body = {
         "UniqueId": current_raw.get("UniqueId"),
         "PartId": current_raw.get("PartId"),
@@ -1535,22 +1588,9 @@ def update_part_in_list(
         "CustomerReference": customer_reference if customer_reference is not None else current_raw.get("CustomerReference"),
         "ReferenceDesignator": reference_designator if reference_designator is not None else current_raw.get("ReferenceDesignator"),
         "Notes": notes if notes is not None else current_raw.get("Notes"),
-        "SelectedQuantityIndex": current_raw.get("SelectedQuantityIndex") or 0,
-        "Quantities": current_raw.get("Quantities") or [{"Quantity": 1}],
+        "SelectedQuantityIndex": 0,
+        "Quantities": [put_quantity],
     }
-    if quantity is not None:
-        idx = body["SelectedQuantityIndex"]
-        if not body["Quantities"]:
-            body["Quantities"] = [{"Quantity": int(quantity)}]
-        else:
-            # Mutate a copy so we don't disturb the raw response we read above.
-            quantities = [dict(q) for q in body["Quantities"]]
-            if 0 <= idx < len(quantities):
-                quantities[idx]["Quantity"] = int(quantity)
-            else:
-                quantities[0]["Quantity"] = int(quantity)
-                body["SelectedQuantityIndex"] = 0
-            body["Quantities"] = quantities
 
     _make_user_request(
         "PUT", f"{MYLISTS_BASE}/lists/{list_id}/parts/{unique_id}",

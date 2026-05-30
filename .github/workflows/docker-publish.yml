@@ -8,11 +8,11 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    # No job-level permissions — inherits workflow-level `contents: read`.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,6 +28,11 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
+    # packages:write scoped to the only job that actually pushes to GHCR.
+    # Top-level scope would grant it to test too, which has no reason to write.
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
