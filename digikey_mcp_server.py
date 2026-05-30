@@ -1,8 +1,12 @@
 import os
 import re
 import json
+import time
+import stat
 import difflib
 import logging
+import threading
+from pathlib import Path
 from fastmcp import FastMCP
 from dotenv import load_dotenv
 import requests
@@ -27,10 +31,36 @@ OFFLINE_MODE = os.getenv("DIGIKEY_OFFLINE_MODE", "false").lower() in ("true", "1
 # DigiKey OAuth2 token endpoint
 if USE_SANDBOX:
     TOKEN_URL = "https://sandbox-api.digikey.com/v1/oauth2/token"
+    AUTHORIZE_URL = "https://sandbox-api.digikey.com/v1/oauth2/authorize"
     API_BASE = "https://sandbox-api.digikey.com"
 else:
     TOKEN_URL = "https://api.digikey.com/v1/oauth2/token"
+    AUTHORIZE_URL = "https://api.digikey.com/v1/oauth2/authorize"
     API_BASE = "https://api.digikey.com"
+
+# MyLists v1 (user-context). Same host, different base path.
+MYLISTS_BASE = f"{API_BASE}/mylists/v1"
+
+# User-scoped OAuth state. None of these are read at import time; the user token is
+# fetched lazily on the first MyLists tool call so the offline tests and Product
+# Search tools keep working without user-auth set up.
+DIGIKEY_ACCOUNT_ID = os.getenv("DIGIKEY_ACCOUNT_ID")
+DIGIKEY_REDIRECT_URI = os.getenv("DIGIKEY_REDIRECT_URI", "https://localhost")
+# Seed: a refresh token obtained out-of-band via `digikey-mcp-auth login`. Used ONLY
+# to populate an empty cache on first MyLists call — after that the cache file is the
+# source of truth (DigiKey rotates refresh tokens on every refresh, so the env-var
+# value goes stale immediately).
+DIGIKEY_REFRESH_TOKEN_SEED = os.getenv("DIGIKEY_REFRESH_TOKEN_SEED")
+
+
+def _default_token_cache_path() -> Path:
+    """XDG-style default for the per-deployment token cache."""
+    xdg = os.getenv("XDG_CONFIG_HOME")
+    base = Path(xdg) if xdg else Path.home() / ".config"
+    return base / "digikey-mcp" / "tokens.json"
+
+
+DIGIKEY_TOKEN_CACHE = Path(os.getenv("DIGIKEY_TOKEN_CACHE") or _default_token_cache_path())
 
 # Initialize FastMCP server
 mcp = FastMCP("DigiKey MCP Server")
@@ -104,6 +134,202 @@ def _make_request(method: str, url: str, headers: dict, data: dict = None) -> di
         resp.raise_for_status()
     
     return resp.json()
+
+# --- User-context (3-legged OAuth) state for MyLists v1 -------------------------
+#
+# Lazily initialized on first MyLists call. DigiKey's auth-code grant returns a
+# refresh_token that doesn't expire but IS rotated on every access-token refresh —
+# the old refresh_token becomes invalid the moment a new one is issued. That makes
+# env-vars a bad source of truth (they'd go stale after the first refresh), so the
+# server persists tokens to a writable JSON cache file and reads/writes there.
+#
+# Bootstrap: when the cache file is missing and DIGIKEY_REFRESH_TOKEN_SEED is set,
+# the server creates the cache from the seed on first use. After that, the seed is
+# ignored. This lets a deployment ship a one-shot env-var secret without giving up
+# rotation.
+#
+# In-memory fallback: if the cache file can't be written (read-only rootfs, no
+# volume mounted), the server keeps the tokens in memory for the life of the
+# process and logs a warning. Restart requires a fresh seed.
+
+_USER_TOKEN_LOCK = threading.Lock()
+_USER_TOKEN_STATE: dict = {
+    "refresh_token": None,
+    "access_token": None,
+    "expires_at": 0,  # unix ts; 0 = never fetched / always-expired sentinel
+}
+# Refresh ~60s before the token actually expires so concurrent calls don't race
+# DigiKey's clock skew. Access tokens live ~1799s, so this is a small fraction.
+_TOKEN_REFRESH_LEEWAY_SECS = 60
+_TOKEN_CACHE_WRITE_OK = True  # flips to False after first write failure; suppresses repeat warnings
+
+
+def _read_token_cache() -> dict | None:
+    """Return the cached token dict, or None if the file doesn't exist / is unreadable.
+
+    Bad cache files raise, since silently treating them as 'no cache' would mask data
+    corruption and force a re-auth that the operator would never understand.
+    """
+    if not DIGIKEY_TOKEN_CACHE.exists():
+        return None
+    try:
+        return json.loads(DIGIKEY_TOKEN_CACHE.read_text())
+    except json.JSONDecodeError as e:
+        raise RuntimeError(
+            f"Token cache at {DIGIKEY_TOKEN_CACHE} is not valid JSON ({e}). "
+            f"Delete the file and re-bootstrap via DIGIKEY_REFRESH_TOKEN_SEED."
+        ) from e
+
+
+def _write_token_cache(state: dict) -> None:
+    """Atomically persist tokens to the cache file with 0600 perms.
+
+    Failure here is non-fatal — DigiKey deployments without a writable cache path
+    still work for the life of the process; they just can't survive a restart.
+    """
+    global _TOKEN_CACHE_WRITE_OK
+    try:
+        DIGIKEY_TOKEN_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = DIGIKEY_TOKEN_CACHE.with_suffix(DIGIKEY_TOKEN_CACHE.suffix + ".tmp")
+        tmp.write_text(json.dumps(state, indent=2))
+        # Tighten perms before the rename so there's no window where the file is
+        # readable by other users.
+        tmp.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        os.replace(tmp, DIGIKEY_TOKEN_CACHE)
+        _TOKEN_CACHE_WRITE_OK = True
+    except OSError as e:
+        if _TOKEN_CACHE_WRITE_OK:
+            # Log once per failure-streak so a read-only deployment doesn't spam logs.
+            logger.warning(
+                "Could not persist token cache to %s (%s). Tokens will live in memory "
+                "only; the next process restart will need a fresh DIGIKEY_REFRESH_TOKEN_SEED.",
+                DIGIKEY_TOKEN_CACHE, e,
+            )
+            _TOKEN_CACHE_WRITE_OK = False
+
+
+def _refresh_user_access_token(refresh_token: str) -> dict:
+    """Exchange a refresh_token for a new access_token. Returns the full token response.
+
+    DigiKey rotates the refresh_token on every call — the response dict's
+    'refresh_token' field is a NEW value and the input becomes invalid immediately.
+    Callers must persist the new value or the next refresh will fail with invalid_grant.
+    """
+    if not CLIENT_ID or not CLIENT_SECRET:
+        raise ValueError("CLIENT_ID and CLIENT_SECRET must be set to refresh MyLists tokens.")
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+    }
+    resp = requests.post(
+        TOKEN_URL, data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    if resp.status_code != 200:
+        # Surface DigiKey's error verbatim — 'invalid_grant' means the refresh token
+        # was rotated out from under us (server restart with stale seed) or the user
+        # revoked access. Either way the operator needs to re-bootstrap.
+        raise RuntimeError(
+            f"DigiKey token refresh failed ({resp.status_code}): {resp.text}. "
+            f"Run `digikey-mcp-auth login` locally and update DIGIKEY_REFRESH_TOKEN_SEED."
+        )
+    return resp.json()
+
+
+def _get_user_access_token() -> str:
+    """Return a valid user-scoped access token, refreshing if needed.
+
+    Thread-safe: holds a lock around the refresh so concurrent tool calls don't issue
+    multiple refreshes (only one would succeed — DigiKey invalidates the prior refresh
+    token on use, so a second concurrent refresh would 400).
+    """
+    with _USER_TOKEN_LOCK:
+        # Load from cache on first use, falling back to the seed env var.
+        if _USER_TOKEN_STATE["refresh_token"] is None:
+            cached = _read_token_cache()
+            if cached and cached.get("refresh_token"):
+                _USER_TOKEN_STATE.update(cached)
+                logger.info("Loaded MyLists tokens from %s", DIGIKEY_TOKEN_CACHE)
+            elif DIGIKEY_REFRESH_TOKEN_SEED:
+                _USER_TOKEN_STATE["refresh_token"] = DIGIKEY_REFRESH_TOKEN_SEED
+                logger.info("Bootstrapping MyLists token cache from DIGIKEY_REFRESH_TOKEN_SEED.")
+            else:
+                raise RuntimeError(
+                    "MyLists tools require user-context auth, but no refresh token is "
+                    f"cached at {DIGIKEY_TOKEN_CACHE} and DIGIKEY_REFRESH_TOKEN_SEED is "
+                    f"not set. Run `digikey-mcp-auth login` locally, then set "
+                    f"DIGIKEY_REFRESH_TOKEN_SEED to the value it prints (or write "
+                    f"directly to the cache path)."
+                )
+
+        now = int(time.time())
+        if _USER_TOKEN_STATE["access_token"] and now < _USER_TOKEN_STATE["expires_at"] - _TOKEN_REFRESH_LEEWAY_SECS:
+            return _USER_TOKEN_STATE["access_token"]
+
+        tokens = _refresh_user_access_token(_USER_TOKEN_STATE["refresh_token"])
+        _USER_TOKEN_STATE["access_token"] = tokens["access_token"]
+        # DigiKey rotates the refresh_token; falling back to the old one would brick
+        # the cache on the next refresh.
+        _USER_TOKEN_STATE["refresh_token"] = tokens.get("refresh_token", _USER_TOKEN_STATE["refresh_token"])
+        _USER_TOKEN_STATE["expires_at"] = now + int(tokens.get("expires_in", 1799))
+        _write_token_cache(dict(_USER_TOKEN_STATE))
+        return _USER_TOKEN_STATE["access_token"]
+
+
+def _get_user_headers() -> dict:
+    """Headers for user-context (MyLists) requests."""
+    headers = {
+        "Authorization": f"Bearer {_get_user_access_token()}",
+        "X-DIGIKEY-Client-Id": CLIENT_ID,
+        "Content-Type": "application/json",
+        "X-DIGIKEY-Locale-Site": "US",
+        "X-DIGIKEY-Locale-Language": "en",
+        "X-DIGIKEY-Locale-Currency": "USD",
+    }
+    if DIGIKEY_ACCOUNT_ID:
+        headers["X-DIGIKEY-Account-Id"] = DIGIKEY_ACCOUNT_ID
+    return headers
+
+
+def _make_user_request(method: str, url: str, data=None, params: dict = None) -> dict | list | None:
+    """Make a MyLists API request with the user-scoped token. Mirrors _make_request
+    but takes its headers from _get_user_headers and supports non-JSON empty responses
+    (DELETE returns 204).
+
+    Tests intercept this in conftest.py the same way they intercept _make_request.
+    """
+    headers = _get_user_headers()
+    if params:
+        url = url + "?" + "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
+
+    logger.info(f"Making {method} {url} (user-context)")
+    if data is not None:
+        logger.debug(f"Request body: {json.dumps(data, indent=2)}")
+
+    method_upper = method.upper()
+    if method_upper == "GET":
+        resp = requests.get(url, headers=headers)
+    elif method_upper == "DELETE":
+        resp = requests.delete(url, headers=headers)
+    elif method_upper == "POST":
+        resp = requests.post(url, headers=headers, json=data)
+    elif method_upper == "PUT":
+        resp = requests.put(url, headers=headers, json=data)
+    else:
+        raise ValueError(f"Unsupported HTTP method: {method}")
+
+    logger.info(f"Response status: {resp.status_code}")
+    if not resp.ok:
+        logger.error(f"MyLists API error: {resp.status_code} - {resp.text}")
+        resp.raise_for_status()
+
+    # 204 No Content or other empty bodies — DELETE in particular.
+    if resp.status_code == 204 or not resp.content:
+        return None
+    return resp.json()
+
 
 _CATEGORY_NAME_CACHE: dict = {}
 
@@ -948,8 +1174,405 @@ def get_digi_reel_pricing(product_number: str, requested_quantity: int, customer
     return _make_request("GET", url, headers)
 
 
+# =============================================================================
+# User-scoped tools — DigiKey APIs that require 3-legged OAuth (per-customer
+# refresh token), as opposed to the client_credentials grant the Product Search
+# tools use. MyLists v1 is the first such surface; Orders / Cart / etc. would
+# share the same gate when added.
+#
+# Registration is CONDITIONAL on user-context auth being plausibly configured
+# (DIGIKEY_REFRESH_TOKEN_SEED env var present OR cache file exists at module
+# load). On a deployment without user-auth set up, an agent sees the Product
+# Search tools only — user-scoped tools don't appear in tools/list at all,
+# rather than appearing and exploding at call time. This matches the pattern in
+# atlassian-mcp-server / mcp-atlassian (servers with mixed auth contexts that
+# can operate degraded); google-drive-mcp / linear-mcp (single-context servers)
+# take the opposite approach. Our split between always-on client_credentials
+# and optional refresh_token maps to the conditional side.
+#
+# The check happens at module import, so adding user-auth post-startup requires
+# a restart — fine for our deployment shapes (mcpjungle / sidecar config
+# changes already imply restart).
+# =============================================================================
+
+
+def _user_auth_available() -> bool:
+    """True when user-scoped tools should be exposed.
+
+    A seed env var or an existing cache file is enough — we don't try to refresh
+    here because (1) it's slow at import time, (2) it would couple module load
+    to network availability, and (3) a stale-but-present token still tells us
+    the operator intended to enable user-scoped tools. If the token turns out to
+    be invalid, the call-time error is more useful than refusing to register.
+    """
+    return bool(DIGIKEY_REFRESH_TOKEN_SEED) or DIGIKEY_TOKEN_CACHE.exists()
+
+
+_USER_AUTH_AVAILABLE = _user_auth_available()
+if _USER_AUTH_AVAILABLE:
+    logger.info(
+        "User-scoped tools enabled (refresh token: %s).",
+        "from cache" if DIGIKEY_TOKEN_CACHE.exists() else "from seed env var",
+    )
+else:
+    logger.info(
+        "User-scoped tools NOT registered — no refresh token at %s and "
+        "DIGIKEY_REFRESH_TOKEN_SEED is unset. Run `digikey-mcp-auth login` to enable.",
+        DIGIKEY_TOKEN_CACHE,
+    )
+
+
+def _user_scoped_tool(fn):
+    """Decorator: equivalent to @mcp.tool() when user-scoped auth is configured,
+    no-op otherwise. The plain function stays accessible under its name either
+    way — that lets tests and direct-import callers exercise the logic without
+    requiring tool registration."""
+    if _USER_AUTH_AVAILABLE:
+        return mcp.tool()(fn)
+    return fn
+
+
+# -----------------------------------------------------------------------------
+# MyLists v1 — saved BOM / parts lists tied to a DigiKey customer account.
+# See _get_user_access_token() and the digikey_mcp_auth helper for the
+# bootstrap flow.
+# -----------------------------------------------------------------------------
+
+
+def _slim_list_data(ld: dict) -> dict:
+    """Trim a MyLists ListData entry to the fields useful in an LLM context.
+
+    Drops the full PartsList (which can blow context on a large list — call
+    get_parts_in_list explicitly for that), nested user info, and the column-
+    preferences UI metadata.
+    """
+    return {
+        "Id": ld.get("Id"),
+        "ListName": ld.get("ListName"),
+        "TotalParts": ld.get("TotalParts"),
+        "CreatedBy": ld.get("CreatedBy"),
+        "DateCreated": ld.get("DateCreated"),
+        "DateModified": ld.get("DateModified"),
+        "DateLastAccessed": ld.get("DateLastAccessed"),
+        "Notes": ld.get("Notes"),
+        "Tags": ld.get("Tags"),
+        "CanEdit": ld.get("CanEdit"),
+    }
+
+
+def _slim_list_part(p: dict) -> dict:
+    """Trim a MyLists ListPart to the fields useful in an LLM context.
+
+    Drops display-only flags (ListPartFlags), substitute/alternate arrays (call
+    search_product_substitutions for those), category-of-origin info, and the
+    full quantity break-pricing matrix. Keeps identifiers, the user's annotations
+    (CustomerReference, ReferenceDesignator, Notes), and the canonical part
+    fields needed to round-trip a list item back to product details.
+    """
+    return {
+        "UniqueId": p.get("UniqueId"),
+        "RequestedPartNumber": p.get("RequestedPartNumber"),
+        "DigiKeyPartNumber": p.get("DigiKeyPartNumber"),
+        "ManufacturerPartNumber": p.get("ManufacturerPartNumber"),
+        "Manufacturer": p.get("Manufacturer"),
+        "Description": p.get("Description"),
+        "CustomerReference": p.get("CustomerReference"),
+        "ReferenceDesignator": p.get("ReferenceDesignator"),
+        "Notes": p.get("Notes"),
+        "QuantityAvailable": p.get("QuantityAvailable"),
+        "PartStatus": p.get("PartStatus"),
+        "PartDetailUrl": p.get("PartDetailUrl"),
+        # The requested quantity is buried under Quantities[SelectedQuantityIndex].
+        # Surface just the selected one — callers writing back via update_part_in_list
+        # only need this scalar.
+        "RequestedQuantity": _selected_quantity(p),
+    }
+
+
+def _selected_quantity(p: dict) -> int | None:
+    quantities = p.get("Quantities") or []
+    idx = p.get("SelectedQuantityIndex") or 0
+    if 0 <= idx < len(quantities):
+        return quantities[idx].get("QuantityRequested")
+    return None
+
+
+@_user_scoped_tool
+def list_my_lists(start_index: int = 0, limit: int = 50):
+    """List the user's saved DigiKey MyLists (BOM / parts lists).
+
+    Returns slim list metadata (ID, name, part count, dates). Use get_my_list or
+    get_parts_in_list to fetch the contents of a specific list.
+
+    Args:
+        start_index: Pagination offset. Default 0.
+        limit: Max lists to return. Default 50, matches DigiKey's default.
+    """
+    raw = _make_user_request(
+        "GET", f"{MYLISTS_BASE}/lists",
+        params={"startIndex": start_index, "limit": limit},
+    )
+    return [_slim_list_data(ld) for ld in (raw or [])]
+
+
+@_user_scoped_tool
+def get_my_list(list_id: str):
+    """Get metadata for a specific MyList (name, dates, part count, tags, notes).
+
+    This does NOT return the parts themselves — DigiKey's GET /lists/{id} returns
+    an empty PartsList field even though the schema declares it. Call
+    get_parts_in_list(list_id) to fetch the actual parts.
+
+    Args:
+        list_id: The DigiKey list ID (from list_my_lists).
+    """
+    raw = _make_user_request("GET", f"{MYLISTS_BASE}/lists/{list_id}")
+    return _slim_list_data(raw) if raw else None
+
+
+@_user_scoped_tool
+def create_my_list(list_name: str, notes: str = None, tags: list = None):
+    """Create a new MyList. Returns the new list ID (as a string).
+
+    Args:
+        list_name: Display name for the new list. Must be unique for the user — use
+            validate_my_list_name first if you want to check before creating.
+        notes: Optional free-form notes attached to the list.
+        tags: Optional list of tag strings.
+    """
+    body = {"ListName": list_name}
+    if notes is not None:
+        body["Notes"] = notes
+    if tags:
+        body["Tags"] = tags
+    return _make_user_request("POST", f"{MYLISTS_BASE}/lists", data=body)
+
+
+@_user_scoped_tool
+def delete_my_list(list_id: str):
+    """Delete a MyList permanently. Cannot be undone.
+
+    Args:
+        list_id: The list to delete.
+    """
+    _make_user_request("DELETE", f"{MYLISTS_BASE}/lists/{list_id}")
+    return {"deleted": list_id}
+
+
+@_user_scoped_tool
+def update_my_list_name(list_id: str, new_name: str):
+    """Rename an existing MyList.
+
+    Args:
+        list_id: The list to rename.
+        new_name: The new display name. Must be unique for the user.
+    """
+    _make_user_request("PUT", f"{MYLISTS_BASE}/lists/{list_id}/listName/{new_name}")
+    return {"id": list_id, "list_name": new_name}
+
+
+@_user_scoped_tool
+def validate_my_list_name(list_name: str):
+    """Check whether a list name is available (not already used by the user).
+
+    Args:
+        list_name: Candidate name.
+    """
+    return _make_user_request("GET", f"{MYLISTS_BASE}/lists/validate/{list_name}")
+
+
+@_user_scoped_tool
+def get_parts_in_list(list_id: str, start_index: int = 0, limit: int = 50):
+    """Get parts in a MyList (paginated). Returns slim parts.
+
+    Use this instead of get_my_list when the list is large or you only need parts.
+
+    Args:
+        list_id: The list to read.
+        start_index: Pagination offset.
+        limit: Max parts to return.
+    """
+    raw = _make_user_request(
+        "GET", f"{MYLISTS_BASE}/lists/{list_id}/parts",
+        params={"startIndex": start_index, "limit": limit},
+    )
+    if not raw:
+        return {"TotalParts": 0, "PartsList": []}
+    return {
+        "TotalParts": raw.get("TotalParts"),
+        "PartsList": [_slim_list_part(p) for p in (raw.get("PartsList") or [])],
+    }
+
+
+# DigiKey's per-part GET requires locale query params even though the swagger marks
+# them optional — without them the API returns 400 "request not formatted acceptably".
+# These match the locale headers _get_user_headers already sends and rarely need to
+# vary, so we don't expose them as tool args.
+_LOCALE_PART_PARAMS = {"countryIso": "US", "currencyIso": "USD", "languageIso": "en"}
+
+
+@_user_scoped_tool
+def get_part_from_list(list_id: str, unique_id: str):
+    """Get a single part from a MyList by its UniqueId.
+
+    Args:
+        list_id: The list ID.
+        unique_id: The part's UniqueId within the list (from get_parts_in_list).
+    """
+    raw = _make_user_request(
+        "GET", f"{MYLISTS_BASE}/lists/{list_id}/parts/{unique_id}",
+        params=_LOCALE_PART_PARAMS,
+    )
+    return _slim_list_part(raw) if raw else None
+
+
+def _build_requested_part(
+    part_number: str,
+    quantity: int,
+    customer_reference: str = None,
+    reference_designator: str = None,
+    notes: str = None,
+) -> dict:
+    """Construct a RequestedPart body from a convenience-shaped input.
+
+    Quantity goes into the Quantities array because that's how DigiKey nests it.
+    SelectedQuantityIndex defaults to 0 (the only entry we send).
+    """
+    body = {
+        "RequestedPartNumber": part_number,
+        "Quantities": [{"Quantity": int(quantity)}],
+        "SelectedQuantityIndex": 0,
+    }
+    if customer_reference is not None:
+        body["CustomerReference"] = customer_reference
+    if reference_designator is not None:
+        body["ReferenceDesignator"] = reference_designator
+    if notes is not None:
+        body["Notes"] = notes
+    return body
+
+
+@_user_scoped_tool
+def add_parts_to_list(list_id: str, parts: list, index: int = 0):
+    """Add one or more parts to a MyList.
+
+    Each part is a dict with at minimum {"part_number": "...", "quantity": N}.
+    Optional fields: customer_reference, reference_designator, notes.
+
+    Example:
+        add_parts_to_list(
+            list_id="abc-123",
+            parts=[
+                {"part_number": "565-1571-1-ND", "quantity": 10, "reference_designator": "C1"},
+                {"part_number": "1276-1010-1-ND", "quantity": 5},
+            ],
+        )
+
+    Returns a list of the UniqueIds DigiKey assigned to the new entries.
+
+    Args:
+        list_id: The target list.
+        parts: List of {part_number, quantity, ...} dicts.
+        index: Insert position within the list. Default 0 (top).
+    """
+    if not parts:
+        raise ValueError("parts must be a non-empty list")
+    body = []
+    for p in parts:
+        if not isinstance(p, dict) or "part_number" not in p or "quantity" not in p:
+            raise ValueError(
+                "Each entry in parts must be a dict with at least "
+                f"'part_number' and 'quantity'. Got: {p!r}"
+            )
+        body.append(_build_requested_part(
+            part_number=p["part_number"],
+            quantity=p["quantity"],
+            customer_reference=p.get("customer_reference"),
+            reference_designator=p.get("reference_designator"),
+            notes=p.get("notes"),
+        ))
+    return _make_user_request(
+        "POST", f"{MYLISTS_BASE}/lists/{list_id}/parts",
+        data=body, params={"index": index},
+    )
+
+
+@_user_scoped_tool
+def update_part_in_list(
+    list_id: str,
+    unique_id: str,
+    quantity: int = None,
+    customer_reference: str = None,
+    reference_designator: str = None,
+    notes: str = None,
+):
+    """Update fields on an existing part in a MyList. Only fields you pass are
+    changed; omitted args leave the existing value in place.
+
+    Args:
+        list_id: The list ID.
+        unique_id: The part's UniqueId within the list.
+        quantity: New quantity. Omit to leave unchanged.
+        customer_reference: New customer reference. Omit to leave unchanged.
+        reference_designator: New reference designator. Omit to leave unchanged.
+        notes: New notes. Omit to leave unchanged.
+    """
+    # DigiKey's PUT replaces the whole RequestedPart object, so we need the current
+    # values to preserve fields the caller didn't touch.
+    current_raw = _make_user_request(
+        "GET", f"{MYLISTS_BASE}/lists/{list_id}/parts/{unique_id}",
+        params=_LOCALE_PART_PARAMS,
+    )
+    if not current_raw:
+        raise ValueError(f"Part {unique_id!r} not found in list {list_id!r}")
+
+    body = {
+        "UniqueId": current_raw.get("UniqueId"),
+        "PartId": current_raw.get("PartId"),
+        "RequestedPartNumber": current_raw.get("RequestedPartNumber"),
+        "OriginalPartNumber": current_raw.get("OriginalPartNumber"),
+        "ManufacturerName": current_raw.get("RequestedManufacturerName") or current_raw.get("Manufacturer"),
+        "CustomerReference": customer_reference if customer_reference is not None else current_raw.get("CustomerReference"),
+        "ReferenceDesignator": reference_designator if reference_designator is not None else current_raw.get("ReferenceDesignator"),
+        "Notes": notes if notes is not None else current_raw.get("Notes"),
+        "SelectedQuantityIndex": current_raw.get("SelectedQuantityIndex") or 0,
+        "Quantities": current_raw.get("Quantities") or [{"Quantity": 1}],
+    }
+    if quantity is not None:
+        idx = body["SelectedQuantityIndex"]
+        if not body["Quantities"]:
+            body["Quantities"] = [{"Quantity": int(quantity)}]
+        else:
+            # Mutate a copy so we don't disturb the raw response we read above.
+            quantities = [dict(q) for q in body["Quantities"]]
+            if 0 <= idx < len(quantities):
+                quantities[idx]["Quantity"] = int(quantity)
+            else:
+                quantities[0]["Quantity"] = int(quantity)
+                body["SelectedQuantityIndex"] = 0
+            body["Quantities"] = quantities
+
+    _make_user_request(
+        "PUT", f"{MYLISTS_BASE}/lists/{list_id}/parts/{unique_id}",
+        data=body,
+    )
+    return {"updated": unique_id}
+
+
+@_user_scoped_tool
+def delete_part_from_list(list_id: str, unique_id: str):
+    """Remove a part from a MyList by its UniqueId.
+
+    Args:
+        list_id: The list ID.
+        unique_id: The part's UniqueId within the list.
+    """
+    _make_user_request("DELETE", f"{MYLISTS_BASE}/lists/{list_id}/parts/{unique_id}")
+    return {"deleted": unique_id}
+
+
 def main():
     mcp.run()
 
 if __name__ == "__main__":
-    main() 
+    main()
