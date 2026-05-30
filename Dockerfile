@@ -32,6 +32,9 @@ ENV DIGIKEY_TOKEN_CACHE=/data/tokens.json \
     DIGIKEY_MCP_PORT=8000 \
     PYTHONUNBUFFERED=1
 
-USER digikey
+# Pin the numeric UID rather than the username so Kubernetes' runAsNonRoot pod
+# admission check (which runs before the container starts and can't resolve
+# /etc/passwd) accepts the image without requiring runAsUser: 1000 on the pod.
+USER 1000
 EXPOSE 8000
 ENTRYPOINT ["digikey-mcp"]

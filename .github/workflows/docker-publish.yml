@@ -49,10 +49,12 @@ jobs:
           # On a v1.2.3 push: produces 1.2.3, 1.2, latest. Major-only ("1") is
           # intentionally omitted — pre-1.0 we don't want a bare `1` floating tag,
           # and post-1.0 it's still a footgun for callers pinning loosely.
+          # `latest` is gated on push events so a workflow_dispatch diagnostic
+          # run (which has no semver tag context) can't silently retarget it.
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.event_name == 'push' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
