@@ -1572,7 +1572,33 @@ def delete_part_from_list(list_id: str, unique_id: str):
 
 
 def main():
-    mcp.run()
+    """Entry point.
+
+    Transport selection comes from DIGIKEY_MCP_TRANSPORT:
+      * stdio (default)         — for local MCP clients spawning this as a child
+                                   process. Matches what existing users get.
+      * http / streamable-http  — FastMCP's HTTP transport; binds host/port from
+                                   DIGIKEY_MCP_HOST / DIGIKEY_MCP_PORT.
+
+    Defaults are deliberate: stdio so existing setups don't break, and when http
+    is requested the bind defaults to 127.0.0.1 — containers that want to expose
+    the port set DIGIKEY_MCP_HOST=0.0.0.0 explicitly (the Dockerfile does this).
+    """
+    transport = os.getenv("DIGIKEY_MCP_TRANSPORT", "stdio").lower()
+    if transport == "stdio":
+        mcp.run()
+        return
+    if transport in ("http", "streamable-http", "sse"):
+        host = os.getenv("DIGIKEY_MCP_HOST", "127.0.0.1")
+        port = int(os.getenv("DIGIKEY_MCP_PORT", "8000"))
+        logger.info("Starting %s transport on %s:%s", transport, host, port)
+        mcp.run(transport=transport, host=host, port=port)
+        return
+    raise ValueError(
+        f"Unknown DIGIKEY_MCP_TRANSPORT={transport!r}. "
+        f"Valid values: stdio, http, streamable-http, sse."
+    )
+
 
 if __name__ == "__main__":
     main()
