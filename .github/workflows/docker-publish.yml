@@ -15,15 +15,16 @@ jobs:
     # No job-level permissions — inherits workflow-level `contents: read`.
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # Use uv so CI honors uv.lock. `pip install .` would silently pull whatever
+      # major version of fastmcp is current on PyPI, and fastmcp 3.x changed the
+      # @mcp.tool() wrapper shape in a way our tests' `.fn` access depends on —
+      # the lock pins 2.9.2 deliberately. `--frozen` makes uv fail loudly if the
+      # lock and pyproject.toml drift, which is exactly what we want CI to enforce.
+      - uses: astral-sh/setup-uv@v3
         with:
-          python-version: '3.12'
-          cache: pip
-      - name: Install package + pytest
-        run: |
-          pip install . pytest
+          enable-cache: true
       - name: Run offline test suite
-        run: pytest -q
+        run: uv run --frozen --with pytest pytest -q
 
   build-and-push:
     needs: test
