@@ -56,6 +56,9 @@ def _exchange_code(
             "redirect_uri": redirect_uri,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
+        # Generous but bounded — a stuck endpoint shouldn't leave the CLI hanging
+        # past the auth code's 60-second TTL (when the code would expire anyway).
+        timeout=30,
     )
     if resp.status_code != 200:
         raise SystemExit(
@@ -93,7 +96,13 @@ def _extract_code(raw_input: str) -> str:
 
 
 def _write_cache(tokens: dict, path: Path, expires_in_default: int = 1799) -> None:
-    """Write a fresh token cache compatible with the server's _read_token_cache."""
+    """Write a fresh token cache compatible with the server's _read_token_cache.
+
+    Uses os.open with mode 0600 so the file is created with restrictive perms
+    from the start — write_text() + chmod has a window where the umask
+    determines the mode, which on most systems makes the refresh token briefly
+    readable by other local users.
+    """
     import time
 
     state = {
@@ -102,8 +111,16 @@ def _write_cache(tokens: dict, path: Path, expires_in_default: int = 1799) -> No
         "expires_at": int(time.time()) + int(tokens.get("expires_in", expires_in_default)),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2))
-    path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+    # O_TRUNC because re-running `login --write-cache` should replace an existing
+    # cache without prompting; we accept the trade-off vs O_EXCL since the auth
+    # CLI is a deliberate operator action, not a concurrent process.
+    fd = os.open(
+        path,
+        os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+        stat.S_IRUSR | stat.S_IWUSR,
+    )
+    with os.fdopen(fd, "w") as f:
+        f.write(json.dumps(state, indent=2))
 
 
 def cmd_login(args: argparse.Namespace) -> int:

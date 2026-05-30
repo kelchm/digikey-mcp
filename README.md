@@ -85,7 +85,7 @@ To add a new scenario, add the capture call to `tests/refresh_snapshots.py` and 
 #### MyLists v1
 
 - `list_my_lists(start_index=0, limit=50)` — saved BOM / parts lists.
-- `get_my_list(list_id)` — list metadata + parts.
+- `get_my_list(list_id)` — list **metadata only** (name, dates, part count, tags, notes). DigiKey's `GET /lists/{id}` returns an empty parts array regardless of contents, so the parts have their own endpoint — use `get_parts_in_list`.
 - `create_my_list(list_name, notes=None, tags=None)` — returns the new list ID.
 - `delete_my_list(list_id)`, `update_my_list_name(list_id, new_name)`.
 - `validate_my_list_name(list_name)` — name-availability boolean. (DigiKey's swagger documents a sibling `/validate/name/{listName}` "suggest a variant" endpoint, but the deployed API 404s on it, so it's not exposed.)
@@ -265,7 +265,7 @@ Mount a small writable volume at the cache path. On the first user-scoped tool c
 
 ### What MyLists calls return
 
-Tools follow the same slim-shape conventions as `find_components` — PascalCase passthrough where the field shape is unchanged, distinct names where we collapse arrays into scalars (e.g. `RequestedQuantity` is the selected `Quantities[i].QuantityRequested`). `get_my_list` and `get_parts_in_list` drop the heavy `Flags`, `Substitutes`, `AlternateParts`, and pricing-break arrays — call `get_product_pricing` / `search_product_substitutions` if you need them.
+Tools follow the same slim-shape conventions as `find_components` — PascalCase passthrough where the field shape is unchanged, distinct names where we collapse arrays into scalars (e.g. `RequestedQuantity` is the selected `Quantities[i].QuantityRequested`). The parts-returning tools (`get_parts_in_list`, `get_part_from_list`) drop the heavy `Flags`, `Substitutes`, `AlternateParts`, and pricing-break arrays — call `get_product_pricing` / `search_product_substitutions` if you need them. (`get_my_list` returns metadata only, so this isn't relevant there.)
 
 ## Container deployment
 

@@ -137,6 +137,50 @@ def test_get_parts_in_list_passes_pagination(captured):
     assert params == {"startIndex": 20, "limit": 10}
 
 
+def test_update_my_list_name_url_encodes_path_segment(captured):
+    """Names containing /, ?, # or % must be percent-encoded in the path,
+    otherwise the URL would parse as a different route."""
+    captured["stubs"][("PUT", "")] = None  # match-any; we inspect the URL below
+    update_my_list_name("list-abc", "A/B?C#new name 100%")
+    method, url, _, _ = captured["calls"][0]
+    assert method == "PUT"
+    # Each reserved character is percent-encoded; spaces become %20 (not '+').
+    assert url.endswith("/listName/A%2FB%3FC%23new%20name%20100%25")
+
+
+def test_validate_my_list_name_url_encodes_path_segment(captured):
+    captured["stubs"][("GET", "")] = False
+    validate_my_list_name("My/List?2026")
+    _, url, _, _ = captured["calls"][0]
+    assert url.endswith("/lists/validate/My%2FList%3F2026")
+
+
+def test_make_user_request_url_encodes_query_params(monkeypatch):
+    """urllib.parse.urlencode handles spaces, &, =, … — the prior f-string
+    construction silently produced malformed URLs."""
+    captured_url = {}
+
+    class FakeResp:
+        status_code = 200
+        ok = True
+        content = b"{}"
+        def json(self): return {}
+
+    def fake_get(url, headers=None, timeout=None):
+        captured_url["url"] = url
+        return FakeResp()
+
+    monkeypatch.setattr(srv.requests, "get", fake_get)
+    monkeypatch.setattr(srv, "_get_user_headers", lambda: {})
+
+    srv._make_user_request(
+        "GET", "https://example/x",
+        params={"keyword": "a b&c", "limit": 10, "skip": None},
+    )
+    # None-valued param dropped; others encoded properly.
+    assert captured_url["url"] == "https://example/x?keyword=a+b%26c&limit=10"
+
+
 # ---------- request construction ----------
 
 def test_add_parts_to_list_builds_requested_part_array(captured):
@@ -189,10 +233,10 @@ def test_create_my_list_includes_only_provided_fields(captured):
     assert data == {"ListName": "Tagged BOM", "Tags": ["rev-a"]}
 
 
-def test_update_part_in_list_does_read_modify_write(captured):
-    """PUT replaces the whole object, so the tool must GET first and preserve fields
-    the caller didn't touch."""
-    existing = {
+def _ListPart_stub():
+    """A realistic GET response shape — Quantities uses ListPartQuantity
+    (QuantityRequested, PackOptions, …), which is what DigiKey actually returns."""
+    return {
         "UniqueId": "u-1",
         "PartId": 999,
         "RequestedPartNumber": "565-1571-1-ND",
@@ -202,22 +246,81 @@ def test_update_part_in_list_does_read_modify_write(captured):
         "ReferenceDesignator": "C1, C2",
         "Notes": "old note",
         "SelectedQuantityIndex": 0,
-        "Quantities": [{"Quantity": 10}],
+        "Quantities": [{
+            "QuantityRequested": 10,
+            "CalculatedQuantity": 10,
+            "TargetPrice": 0.45,
+            "SelectedPackType": "Cut Tape (CT)",
+            "SelectedSubPackType": "",
+            "PackOptions": [{"PackType": "Cut Tape (CT)"}, {"PackType": "Tape & Reel"}],
+            "IsInactive": False,
+        }],
     }
-    captured["stubs"][("GET", "/mylists/v1/lists/list-abc/parts/u-1")] = existing
+
+
+def test_update_part_in_list_with_quantity_change(captured):
+    """quantity update: PUT body uses RequestedQuantity shape (Quantity, not
+    QuantityRequested), preserves SelectedPackType/TargetPrice from the GET,
+    and drops every other GET-shape field (PackOptions, CalculatedQuantity,
+    IsInactive, …)."""
+    captured["stubs"][("GET", "/mylists/v1/lists/list-abc/parts/u-1")] = _ListPart_stub()
     captured["stubs"][("PUT", "/mylists/v1/lists/list-abc/parts/u-1")] = None
 
     update_part_in_list(list_id="list-abc", unique_id="u-1", quantity=25, notes="new note")
 
     put_call = [c for c in captured["calls"] if c[0] == "PUT"][0]
-    method, url, data, params = put_call
-    # Fields the caller passed are updated:
+    _, _, data, _ = put_call
     assert data["Notes"] == "new note"
-    assert data["Quantities"][0]["Quantity"] == 25
-    # Fields the caller didn't pass are preserved from the GET response:
+    # Untouched fields preserved from the GET:
     assert data["CustomerReference"] == "old-cref"
     assert data["ReferenceDesignator"] == "C1, C2"
     assert data["RequestedPartNumber"] == "565-1571-1-ND"
+
+    # One entry in PUT-shape; SelectedQuantityIndex collapsed to 0.
+    assert data["SelectedQuantityIndex"] == 0
+    assert data["Quantities"] == [{
+        "Quantity": 25,
+        "TargetPrice": 0.45,
+        "SelectedPackType": "Cut Tape (CT)",
+    }]
+    # SelectedSubPackType was "" in the GET — falsy, so it's dropped (not echoed
+    # back as an empty string, which would be uglier than just omitting the key).
+
+
+def test_update_part_in_list_notes_only_preserves_quantity(captured):
+    """The notes-only path (quantity=None) used to send the GET's Quantities array
+    verbatim — which has QuantityRequested but no Quantity, so the PUT would zero
+    out the stored quantity. Regression test for that bug."""
+    captured["stubs"][("GET", "/mylists/v1/lists/list-abc/parts/u-1")] = _ListPart_stub()
+    captured["stubs"][("PUT", "/mylists/v1/lists/list-abc/parts/u-1")] = None
+
+    update_part_in_list(list_id="list-abc", unique_id="u-1", notes="just updating notes")
+
+    put_call = [c for c in captured["calls"] if c[0] == "PUT"][0]
+    _, _, data, _ = put_call
+    assert data["Notes"] == "just updating notes"
+    # Existing quantity (10) carried over under the PUT-shape key.
+    assert data["Quantities"][0]["Quantity"] == 10
+
+
+def test_update_part_in_list_with_bare_quantity_omits_packtype(captured):
+    """When the GET has no pack-type info (a fresh part added without one), the
+    PUT body shouldn't carry None-valued SelectedPackType/SelectedSubPackType
+    keys — omit them entirely."""
+    captured["stubs"][("GET", "/mylists/v1/lists/list-abc/parts/u-1")] = {
+        "UniqueId": "u-1",
+        "PartId": 999,
+        "RequestedPartNumber": "565-1571-1-ND",
+        "SelectedQuantityIndex": 0,
+        "Quantities": [{"QuantityRequested": 5}],  # bare
+    }
+    captured["stubs"][("PUT", "/mylists/v1/lists/list-abc/parts/u-1")] = None
+
+    update_part_in_list(list_id="list-abc", unique_id="u-1", quantity=7)
+
+    put_call = [c for c in captured["calls"] if c[0] == "PUT"][0]
+    _, _, data, _ = put_call
+    assert data["Quantities"] == [{"Quantity": 7}]
 
 
 # ---------- user-token bootstrap and refresh ----------
@@ -243,7 +346,7 @@ def test_bootstrap_from_seed_creates_cache(monkeypatch, tmp_path):
             }
 
     posts = []
-    def fake_post(url, data=None, headers=None):
+    def fake_post(url, data=None, headers=None, timeout=None):
         posts.append((url, data))
         return FakeResp()
     monkeypatch.setattr(srv.requests, "post", fake_post)
