@@ -60,7 +60,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          # Tag pushes publish; workflow_dispatch builds (cross-arch sanity
+          # check) without publishing, so we don't pollute GHCR with manual
+          # runs and don't trip build-push-action's empty-tags error path.
+          push: ${{ github.event_name == 'push' }}
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
