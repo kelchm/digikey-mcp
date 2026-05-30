@@ -33,6 +33,18 @@ uv run python digikey_mcp_server.py
 uv run digikey-mcp
 ```
 
+By default the server uses MCP's stdio transport. To run as an HTTP server (for remote MCP clients, sidecar deployments, etc.):
+
+```bash
+DIGIKEY_MCP_TRANSPORT=http \
+DIGIKEY_MCP_HOST=127.0.0.1 \
+DIGIKEY_MCP_PORT=8000 \
+uv run digikey-mcp
+# MCP endpoint: http://127.0.0.1:8000/mcp/
+```
+
+`DIGIKEY_MCP_HOST` defaults to `127.0.0.1` (loopback only). For container deployments that expose the port, set `DIGIKEY_MCP_HOST=0.0.0.0` — the bundled Dockerfile does this.
+
 ### 4. Tests
 The test suite runs offline against captured API snapshots — no credentials, no quota:
 ```bash
@@ -254,6 +266,42 @@ Mount a small writable volume at the cache path. On the first user-scoped tool c
 ### What MyLists calls return
 
 Tools follow the same slim-shape conventions as `find_components` — PascalCase passthrough where the field shape is unchanged, distinct names where we collapse arrays into scalars (e.g. `RequestedQuantity` is the selected `Quantities[i].QuantityRequested`). `get_my_list` and `get_parts_in_list` drop the heavy `Flags`, `Substitutes`, `AlternateParts`, and pricing-break arrays — call `get_product_pricing` / `search_product_substitutions` if you need them.
+
+## Container deployment
+
+A Dockerfile is included. Image defaults to HTTP transport on `0.0.0.0:8000` with the token cache at `/data/tokens.json` (declared as a volume so a host bind-mount works without extra chown).
+
+```bash
+docker build -t digikey-mcp .
+
+docker run -d \
+  --name digikey-mcp \
+  -p 8000:8000 \
+  -e CLIENT_ID=... \
+  -e CLIENT_SECRET=... \
+  -e DIGIKEY_REFRESH_TOKEN_SEED=... \
+  -v digikey-mcp-data:/data \
+  digikey-mcp
+# MCP endpoint: http://<host>:8000/mcp/
+```
+
+To run as stdio under a process supervisor (mcpjungle, etc.) instead:
+
+```bash
+docker run --rm -i \
+  -e DIGIKEY_MCP_TRANSPORT=stdio \
+  -e CLIENT_ID=... -e CLIENT_SECRET=... \
+  digikey-mcp
+```
+
+### Published images
+
+Tagged commits (`v*`) trigger a GitHub Actions workflow that builds linux/amd64 + linux/arm64 and publishes to GHCR:
+
+```bash
+docker pull ghcr.io/kelchm/digikey-mcp:latest
+# or pin: ghcr.io/kelchm/digikey-mcp:1.2.3   |   ghcr.io/kelchm/digikey-mcp:1.2
+```
 
 ## Notes on the v4 API
 
