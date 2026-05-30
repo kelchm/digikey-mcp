@@ -1,6 +1,6 @@
 # DigiKey MCP Server
 
-An MCP server for DigiKey's Product Search v4 API, built on FastMCP. The main tool is `find_components`: parametric component search by attribute name and value, with cross-unit range support.
+An MCP server for DigiKey's APIs, built on FastMCP. Covers Product Search v4 (parametric component search by attribute name and value, with cross-unit range support — `find_components` is the headline tool) and MyLists v1 (saved BOM / parts list CRUD). MyLists is user-scoped — it uses 3-legged OAuth and is the first of a category of "user-scoped" DigiKey APIs we may extend the server to cover (Orders, Cart, etc.). See [user-scoped tool setup](#user-scoped-tool-setup) for the bootstrap.
 
 ## Requirements
 
@@ -65,6 +65,22 @@ To add a new scenario, add the capture call to `tests/refresh_snapshots.py` and 
 - `get_product_pricing(product_number, customer_id="0", requested_quantity=1)` — full price tiers.
 - `get_digi_reel_pricing(product_number, requested_quantity, customer_id="0")` — DigiReel pricing.
 - `get_product_media(product_number)` — images, datasheets, videos.
+
+### User-scoped tools (require 3-legged OAuth — see [user-scoped tool setup](#user-scoped-tool-setup))
+
+> **Conditional registration.** Tools that require user-context auth only appear in the MCP tool list when that auth is plausibly configured — that is, `DIGIKEY_REFRESH_TOKEN_SEED` is set OR a token cache file exists at `DIGIKEY_TOKEN_CACHE` at server startup. On a deployment without user auth, an agent connecting via this MCP sees the Product Search tools only. Adding user auth post-startup requires a server restart. MyLists is the first user-scoped surface; Orders / Cart / etc. would share the same gate when added.
+
+#### MyLists v1
+
+- `list_my_lists(start_index=0, limit=50)` — saved BOM / parts lists.
+- `get_my_list(list_id)` — list metadata + parts.
+- `create_my_list(list_name, notes=None, tags=None)` — returns the new list ID.
+- `delete_my_list(list_id)`, `update_my_list_name(list_id, new_name)`.
+- `validate_my_list_name(list_name)` — name-availability boolean. (DigiKey's swagger documents a sibling `/validate/name/{listName}` "suggest a variant" endpoint, but the deployed API 404s on it, so it's not exposed.)
+- `get_parts_in_list(list_id, start_index=0, limit=50)`, `get_part_from_list(list_id, unique_id)`.
+- `add_parts_to_list(list_id, parts, index=0)` — `parts` is a list of `{"part_number", "quantity", "customer_reference"?, "reference_designator"?, "notes"?}` dicts.
+- `update_part_in_list(list_id, unique_id, quantity=None, customer_reference=None, reference_designator=None, notes=None)` — only fields you pass are changed.
+- `delete_part_from_list(list_id, unique_id)`.
 
 ## Parametric search guide
 
@@ -184,6 +200,60 @@ Field names are PascalCase. Anything that passes through from DigiKey unchanged 
 ```
 
 `keyword_search` and the other tools return DigiKey's raw response shape — see the v4 swagger in `docs/digikey_product_search_v4_swagger.json` for the full schema.
+
+## User-scoped tool setup
+
+Some DigiKey APIs (MyLists today; Orders / Cart in future) require **3-legged OAuth** — the per-customer-account authorization-code flow, not the `client_credentials` grant the Product Search tools use. The Product Search tools keep working with just `CLIENT_ID` / `CLIENT_SECRET`; user-scoped tools need one extra one-time setup step, and don't register at all when that step hasn't been completed (see [Conditional registration](#user-scoped-tools-require-3-legged-oauth--see-user-scoped-tool-setup) above).
+
+### One-time bootstrap (run locally)
+
+You need an HTTPS redirect URI registered on your DigiKey app — `https://localhost` is the simplest choice and is what DigiKey suggests for apps without existing callback infrastructure. DigiKey rejects plain `http://...` redirect URIs.
+
+```bash
+uvx --from . digikey-mcp-auth login
+# Prints a long authorize URL; opens it in your browser. Log in to DigiKey.
+# Your browser will redirect to https://localhost and likely show a "this site
+# can't be reached" error — that's fine. Copy the full URL from the address
+# bar (it contains ?code=...) and paste it back into the CLI.
+# The CLI prints a refresh_token.
+```
+
+### Local dev: write directly to the cache
+
+```bash
+uvx --from . digikey-mcp-auth login --write-cache
+# Tokens saved to $XDG_CONFIG_HOME/digikey-mcp/tokens.json (default
+# ~/.config/digikey-mcp/tokens.json), mode 0600. Start the server normally —
+# it picks up the file automatically.
+```
+
+### Remote deployment: seed via env var
+
+DigiKey **rotates the refresh token on every refresh** — yesterday's token is invalid the moment a new one is issued. That means a plain env var goes stale immediately. The server bootstraps from `DIGIKEY_REFRESH_TOKEN_SEED` once, then persists the rotating token to a writable cache file at `DIGIKEY_TOKEN_CACHE`:
+
+```bash
+# In the deployment's env (e.g. mcpjungle config, sidecar container env, etc.):
+CLIENT_ID=...
+CLIENT_SECRET=...
+DIGIKEY_REFRESH_TOKEN_SEED=<value printed by digikey-mcp-auth login>
+DIGIKEY_TOKEN_CACHE=/data/digikey-mcp/tokens.json    # any writable file path
+DIGIKEY_ACCOUNT_ID=...                                # optional; X-DIGIKEY-Account-Id
+DIGIKEY_REDIRECT_URI=https://localhost                # must match what you used during login
+```
+
+Mount a small writable volume at the cache path. On the first user-scoped tool call, the server consumes the seed, refreshes against DigiKey, writes the rotated tokens to the cache, and ignores the seed forever after.
+
+**If the cache path isn't writable**, the server falls back to in-memory tokens for the life of the process and logs a warning. That works until the process restarts, at which point it needs a fresh seed. mcpjungle's default deployment doesn't expose writable mounts to child MCP processes, so you'll either want to switch to a sidecar container with its own volume or accept the restart-requires-reseed tradeoff.
+
+### Refresh-token lifecycle
+
+- **Access token**: ~30 min lifetime; refreshed silently when within 60 s of expiry.
+- **Refresh token**: doesn't expire on a timer, but rotates on every use. The cache file is the only place the current valid one lives — don't try to keep a separate copy.
+- **If you see `invalid_grant`**: someone or something else used the cached refresh token (process restart against a stale seed, manual logout, two deployments sharing a cache, etc.). Re-run `digikey-mcp-auth login` and re-seed.
+
+### What MyLists calls return
+
+Tools follow the same slim-shape conventions as `find_components` — PascalCase passthrough where the field shape is unchanged, distinct names where we collapse arrays into scalars (e.g. `RequestedQuantity` is the selected `Quantities[i].QuantityRequested`). `get_my_list` and `get_parts_in_list` drop the heavy `Flags`, `Substitutes`, `AlternateParts`, and pricing-break arrays — call `get_product_pricing` / `search_product_substitutions` if you need them.
 
 ## Notes on the v4 API
 

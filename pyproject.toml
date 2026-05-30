@@ -16,9 +16,10 @@ requires-python = ">=3.10"
 
 [project.scripts]
 digikey-mcp = "digikey_mcp_server:main"
+digikey-mcp-auth = "digikey_mcp_auth:main"
 
 [tool.setuptools]
-py-modules = ["digikey_mcp_server"]
+py-modules = ["digikey_mcp_server", "digikey_mcp_auth"]
 
 [dependency-groups]
 dev = ["pytest>=8"]

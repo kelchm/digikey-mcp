@@ -18,6 +18,11 @@ from pathlib import Path
 os.environ["DIGIKEY_OFFLINE_MODE"] = "1"
 os.environ.setdefault("CLIENT_ID", "test-client-id")
 os.environ.setdefault("CLIENT_SECRET", "test-client-secret")
+# Force MyLists tools to register during tests. The server gates registration on
+# whether a refresh token is plausibly configured (seed env var OR cache file
+# present), and we want tests to exercise the registered tool wrappers, not just
+# the bare functions.
+os.environ.setdefault("DIGIKEY_REFRESH_TOKEN_SEED", "test-bootstrap-seed")
 
 # Make the project root importable.
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,3 +59,17 @@ def _clear_category_cache():
     """Reset the per-process category-name cache so tests are order-independent."""
     _srv._CATEGORY_NAME_CACHE.clear()
     yield
+
+
+@pytest.fixture(autouse=True)
+def _reset_user_token_state():
+    """Reset MyLists user-token state between tests so cache-loading / bootstrap
+    paths don't leak. The token cache file path is left alone; individual tests
+    point DIGIKEY_TOKEN_CACHE at a tmp_path when they need to exercise the file."""
+    _srv._USER_TOKEN_STATE.update(
+        {"refresh_token": None, "access_token": None, "expires_at": 0}
+    )
+    yield
+    _srv._USER_TOKEN_STATE.update(
+        {"refresh_token": None, "access_token": None, "expires_at": 0}
+    )

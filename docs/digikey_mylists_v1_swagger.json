@@ -1,0 +1,2039 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "MyLists Api",
+        "description": "MyLists Api provides external access to the Api written for the My Lists Web application. Does everything associated with getting part information and working with lists",
+        "termsOfService": "https:\/\/www.digikey.com\/en\/terms-and-conditions",
+        "contact": {
+            "name": "API Support",
+            "url": "https:\/\/developer.digikey.com\/support"
+        },
+        "version": "v1"
+    },
+    "securityDefinitions": {
+        "apiKeySecurity": {
+            "type": "apiKey",
+            "name": "X-DIGIKEY-Client-Id",
+            "in": "header"
+        },
+        "oauth2ApplicationSecurity": {
+            "type": "oauth2",
+            "flow": "application",
+            "tokenUrl": "https:\/\/api.digikey.com\/v1\/oauth2\/token"
+        }
+    },
+    "security": [
+        {
+            "apiKeySecurity": [],
+            "oauth2ApplicationSecurity": []
+        }
+    ],
+    "host": "api.digikey.com",
+    "x-host-sandbox": "sandbox-api.digikey.com",
+    "x-host-production": "api.digikey.com",
+    "basePath": "\/mylists\/v1",
+    "schemes": [
+        "https"
+    ],
+    "paths": {
+        "\/lists\/{listId}": {
+            "get": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Gets all data about a list.\r\nWill only grab the parts list if you specify it to get the parts list",
+                "operationId": "GetListByListId",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Account-Id",
+                        "description": "Your Digi-Key Account id.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "The ID of the list that you want information for",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#\/definitions\/ListData"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Deletes the specified list",
+                "operationId": "DeleteList",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Account-Id",
+                        "description": "Your Digi-Key Account id.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "The unique identifier of the list to be deleted",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "\/lists": {
+            "get": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Returns a list of ListData classes for the user to view.",
+                "operationId": "Lists",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Account-Id",
+                        "description": "Your Digi-Key Account id.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "startIndex",
+                        "description": "starting index to list of MyLists to retrieve",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 0
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "description": "The number of MyLists to retrieve in this list",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 50
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#\/definitions\/ListData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Creates a new List based on the information passed in.",
+                "operationId": "CreateList",
+                "consumes": [
+                    "application\/json-patch+json",
+                    "application\/json",
+                    "text\/json",
+                    "application\/*+json"
+                ],
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Account-Id",
+                        "description": "Your Digi-Key Account id.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "The information needed to create a new list",
+                        "schema": {
+                            "$ref": "#\/definitions\/CreateListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "\/lists\/validate\/{listName}": {
+            "get": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Checks whether or not the list name already exists for a customerId or user.",
+                "operationId": "IsValidListName",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listName",
+                        "description": "name to validate",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "\/lists\/{listId}\/listName\/{listName}": {
+            "put": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Updates list name of the specified list",
+                "operationId": "UpdateListName",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Account-Id",
+                        "description": "Your Digi-Key Account id.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "The unique identifier of the list to be renamed",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listName",
+                        "description": "The new name of the list",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "\/lists\/{listId}\/parts": {
+            "get": {
+                "tags": [
+                    "Parts"
+                ],
+                "summary": "Gets all parts from the list. If the start index and numberOfParts are entered, then it will limit the request\r\nappropriately",
+                "operationId": "GetPartsByListId",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "The id of the list that you want information for",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "countryIso",
+                        "description": "Desired country",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "query",
+                        "name": "currencyIso",
+                        "description": "Desired currency",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "query",
+                        "name": "languageIso",
+                        "description": "Desired language",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "query",
+                        "name": "startIndex",
+                        "description": "Where in the list you would like to start at",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 0
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "description": "How many parts you would like returned back",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 100
+                    },
+                    {
+                        "in": "query",
+                        "name": "assemblies",
+                        "description": "The amount of units you want for every part entered. Cannot be less than 1",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 1
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeAttrition",
+                        "description": "The listSetting in the database will be used if the value is false. If true it will\r\ninclude attrition",
+                        "type": "boolean",
+                        "default": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#\/definitions\/PartsByListIdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Parts"
+                ],
+                "summary": "Adds parts to the specified list",
+                "operationId": "AddPartsToListId",
+                "consumes": [
+                    "application\/json-patch+json",
+                    "application\/json",
+                    "text\/json",
+                    "application\/*+json"
+                ],
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "Unique list id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "index",
+                        "description": "Index at where you can add the part to",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 0
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "List of parts to add to the specifiedList",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#\/definitions\/RequestedPart"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "\/lists\/{listId}\/parts\/{uniqueId}": {
+            "get": {
+                "tags": [
+                    "Parts"
+                ],
+                "summary": "Gets part from a specified list by the unique id of the part",
+                "operationId": "GetPartFromListByUniqueId",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "Unique list id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "uniqueId",
+                        "description": "A uniqueId for a part that you want pricing for",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "countryIso",
+                        "description": "Desired country",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "query",
+                        "name": "currencyIso",
+                        "description": "Desired currency",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "query",
+                        "name": "languageIso",
+                        "description": "Desired language",
+                        "type": "string",
+                        "default": "en"
+                    },
+                    {
+                        "in": "query",
+                        "name": "pricingCountryIso",
+                        "description": "Desired pricingCountry (set to countryIso by default)",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "query",
+                        "name": "assemblies",
+                        "description": "Number that the quantity should be multiplied by for pricing information",
+                        "type": "integer",
+                        "format": "int32",
+                        "default": 0
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdBy",
+                        "description": "Used if a customerId is not passed in",
+                        "type": "string",
+                        "default": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#\/definitions\/ListPart"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Parts"
+                ],
+                "summary": "Updates all part information for the specified part unique id",
+                "operationId": "UpdatePartFromListByUniqueId",
+                "consumes": [
+                    "application\/json-patch+json",
+                    "application\/json",
+                    "text\/json",
+                    "application\/*+json"
+                ],
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "Unique id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "uniqueId",
+                        "description": "The uniqueId of the part that should be updated in the database",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdBy",
+                        "description": "Used if a customerId is not passed in",
+                        "type": "string",
+                        "default": ""
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "The part to be updated",
+                        "schema": {
+                            "$ref": "#\/definitions\/RequestedPart"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Parts"
+                ],
+                "summary": "Deletes the specified part",
+                "operationId": "DeletePartFromListByUniqueId",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listId",
+                        "description": "Unique list id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "uniqueId",
+                        "description": "Unique Id for part to be deleted",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdBy",
+                        "description": "Used if a customerId is not passed in",
+                        "type": "string",
+                        "default": ""
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "\/lists\/validate\/name\/{listName}": {
+            "get": {
+                "tags": [
+                    "Lists"
+                ],
+                "summary": "Return a valid list name if it is valid, otherwise adds a number to the end of the list name",
+                "operationId": "ValidListName",
+                "produces": [
+                    "application\/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Authorization",
+                        "description": "OAuth Bearer Token. Please see<a href= \"https:\/\/developer.digikey.com\/documentation\/oauth\" target= \"_blank\" > OAuth 2.0 Documentation <\/a > page for more info.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Client-Id",
+                        "description": "The Client Id for your app.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "header",
+                        "name": "X-DIGIKEY-Account-Id",
+                        "description": "Your Digi-Key Account id.",
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "listName",
+                        "description": "name to validate",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The input model is invalid or malformed.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token is expired or Client Id or subscription are invalid.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "The target resource is forbidden.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The requested resource could not be found",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests - Your rate limit has been exceeded",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "An unhandled error occurred.",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable - The service is temporarily unavailable",
+                        "schema": {
+                            "$ref": "#\/definitions\/ApiErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ApiErrorResponse": {
+            "description": "Common response model returned for any type of HTTP exception.",
+            "type": "object",
+            "properties": {
+                "_ErrorResponseVersion": {
+                    "description": "The version of the error handler.",
+                    "type": "string",
+                    "readOnly": true,
+                    "example": "3.0.0.0"
+                },
+                "StatusCode": {
+                    "format": "int32",
+                    "description": "The HttpStatusCode of the error.",
+                    "type": "integer",
+                    "example": 404
+                },
+                "ErrorMessage": {
+                    "description": "The message provided by the error handler.",
+                    "type": "string",
+                    "example": "The specified part was not found"
+                },
+                "ErrorDetails": {
+                    "description": "The details of the error.",
+                    "type": "string",
+                    "example": "Part Not Found"
+                },
+                "RequestId": {
+                    "description": "The Id of the request that triggered the error. If contacting API Support, please include the RequestId.",
+                    "type": "string",
+                    "example": "22da819d-9517-4a2c-a8c1-0195ea2e7878"
+                },
+                "ValidationErrors": {
+                    "description": "The list of validation errors (if applicable).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/ApiValidationError"
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "ApiValidationError": {
+            "description": "Error with API input.",
+            "type": "object",
+            "properties": {
+                "Field": {
+                    "description": "The field that generated the error.",
+                    "type": "string",
+                    "example": "Keywords"
+                },
+                "Message": {
+                    "description": "The error message that was generated. This often explains how to fix your API input to be valid.",
+                    "type": "string",
+                    "example": "The Keywords field is required."
+                }
+            },
+            "additionalProperties": false
+        },
+        "Column": {
+            "type": "object",
+            "properties": {
+                "ColumnName": {
+                    "type": "string"
+                },
+                "IsVisible": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        },
+        "CreateListRequest": {
+            "description": "Information need for creating a new MyList",
+            "required": [
+                "ListName"
+            ],
+            "type": "object",
+            "properties": {
+                "ListName": {
+                    "description": "Gets or sets name of the new list",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "CreatedBy": {
+                    "description": "Gets or sets who the list was created by (rep or customer)",
+                    "type": "string"
+                },
+                "Tags": {
+                    "description": "Gets or sets assigns any tags entered to the newly created list",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "Source": {
+                    "description": "Gets or Sets Source",
+                    "enum": [
+                        "other",
+                        "internal",
+                        "external",
+                        "mobile",
+                        "search",
+                        "b2b"
+                    ],
+                    "type": "string"
+                },
+                "ListSettings": {
+                    "$ref": "#\/definitions\/ListSettings"
+                },
+                "RefList": {
+                    "$ref": "#\/definitions\/ReferenceList"
+                }
+            },
+            "additionalProperties": false
+        },
+        "CrefPartOption": {
+            "type": "object",
+            "properties": {
+                "ManufacturerPartnumber": {
+                    "type": "string"
+                },
+                "Manufacturer": {
+                    "type": "string"
+                },
+                "MinimumOrderQuantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "Description": {
+                    "type": "string"
+                },
+                "QuantityAvailable": {
+                    "format": "int32",
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false
+        },
+        "ListData": {
+            "type": "object",
+            "properties": {
+                "Id": {
+                    "type": "string"
+                },
+                "ListName": {
+                    "type": "string"
+                },
+                "CreatedBy": {
+                    "type": "string"
+                },
+                "CustomerId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "AccountId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "CompanyName": {
+                    "type": "string"
+                },
+                "FirstName": {
+                    "type": "string"
+                },
+                "LastName": {
+                    "type": "string"
+                },
+                "Notes": {
+                    "type": "string"
+                },
+                "TotalParts": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "DateCreated": {
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "DateLastAccessed": {
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "DateModified": {
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "Tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ListSettings": {
+                    "$ref": "#\/definitions\/ListSettings"
+                },
+                "PartsList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/RequestedPart"
+                    }
+                },
+                "Revisions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/Revision"
+                    }
+                },
+                "CanEdit": {
+                    "type": "boolean"
+                },
+                "UserInformation": {
+                    "$ref": "#\/definitions\/UserInformation"
+                }
+            },
+            "additionalProperties": false
+        },
+        "ListPart": {
+            "type": "object",
+            "properties": {
+                "PartId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "UniqueId": {
+                    "type": "string"
+                },
+                "CustomerReference": {
+                    "type": "string"
+                },
+                "ReferenceDesignator": {
+                    "type": "string"
+                },
+                "Notes": {
+                    "type": "string"
+                },
+                "MinOrderQty": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "MaxOrderQty": {
+                    "format": "int64",
+                    "type": "integer"
+                },
+                "OriginalPartNumber": {
+                    "type": "string"
+                },
+                "RequestedPartNumber": {
+                    "type": "string"
+                },
+                "DigiKeyPartNumber": {
+                    "type": "string"
+                },
+                "ManufacturerPartNumber": {
+                    "type": "string"
+                },
+                "RequestedManufacturerName": {
+                    "type": "string"
+                },
+                "Manufacturer": {
+                    "type": "string"
+                },
+                "Description": {
+                    "type": "string"
+                },
+                "PartStatus": {
+                    "type": "string"
+                },
+                "PartStatusCode": {
+                    "format": "int32",
+                    "enum": [
+                        "Active",
+                        "Obsolete",
+                        "Discontinued",
+                        "ComingSoon",
+                        "LastTimeBuy",
+                        "NotForNewDesigns"
+                    ],
+                    "type": "integer"
+                },
+                "Availability": {
+                    "type": "string"
+                },
+                "TariffCode": {
+                    "format": "int32",
+                    "enum": [
+                        "NoTariff",
+                        "TariffPending",
+                        "TariffApplied"
+                    ],
+                    "type": "integer"
+                },
+                "QuantityAvailable": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "SelectedQuantityIndex": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "Attrition": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "Quantities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/ListPartQuantity"
+                    }
+                },
+                "VendorLeadWeeks": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "PartDetailUrl": {
+                    "type": "string"
+                },
+                "PrimaryDatasheetUrl": {
+                    "type": "string"
+                },
+                "ImageUrl": {
+                    "type": "string"
+                },
+                "ThumbnailUrl": {
+                    "type": "string"
+                },
+                "MarketPlaceSupplierLink": {
+                    "type": "string"
+                },
+                "SupplierName": {
+                    "type": "string"
+                },
+                "Substitutes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/PartOption"
+                    }
+                },
+                "AlternateParts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/PartOption"
+                    }
+                },
+                "Flags": {
+                    "$ref": "#\/definitions\/ListPartFlags"
+                },
+                "ReachStatus": {
+                    "type": "string"
+                },
+                "RohsStatusMessage": {
+                    "type": "string"
+                },
+                "Eccn": {
+                    "type": "string"
+                },
+                "Htsus": {
+                    "type": "string"
+                },
+                "CountryOfOrigin": {
+                    "type": "string"
+                },
+                "EnvironmentalDocs": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "Category": {
+                    "type": "string"
+                },
+                "PartsAvailableForCref": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/CrefPartOption"
+                    }
+                },
+                "CrefsAvailableForPart": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "ListPartFlags": {
+            "type": "object",
+            "properties": {
+                "NonStock": {
+                    "type": "boolean"
+                },
+                "IsNCNR": {
+                    "type": "boolean"
+                },
+                "IsSDS": {
+                    "type": "boolean"
+                },
+                "IsValueAdd": {
+                    "type": "boolean"
+                },
+                "IsMatched": {
+                    "type": "boolean"
+                },
+                "IsMarketPlace": {
+                    "type": "boolean"
+                },
+                "BoNotAllowed": {
+                    "type": "boolean"
+                },
+                "DisplayRegularLeadTime": {
+                    "type": "boolean"
+                },
+                "DisplayCheckActiveLeadTime": {
+                    "type": "boolean"
+                },
+                "MultipleCrefsForPart": {
+                    "type": "boolean"
+                },
+                "MultiplePartsForCref": {
+                    "type": "boolean"
+                },
+                "IsChecked": {
+                    "type": "boolean"
+                },
+                "IsEditable": {
+                    "type": "boolean"
+                },
+                "IsDeniedByCountry": {
+                    "type": "boolean"
+                },
+                "IsDeniedByCurrency": {
+                    "type": "boolean"
+                },
+                "IsDeniedByCustomerId": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        },
+        "ListPartQuantity": {
+            "type": "object",
+            "properties": {
+                "QuantityRequested": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "CalculatedQuantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "TargetPrice": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "SelectedPackType": {
+                    "type": "string"
+                },
+                "SelectedSubPackType": {
+                    "type": "string"
+                },
+                "IsInactive": {
+                    "type": "boolean"
+                },
+                "SelectedPackOptionIndex": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "SelectedSubPackOptionIndex": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "PackOptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/PackOptionWithPricing"
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "ListSettings": {
+            "type": "object",
+            "properties": {
+                "Visibility": {
+                    "enum": [
+                        "Private",
+                        "ReadOnly",
+                        "ReadWrite"
+                    ],
+                    "type": "string"
+                },
+                "PackagePreference": {
+                    "enum": [
+                        "CutTapeOrTR",
+                        "DigiReelOrTR",
+                        "EnteredPartNumber",
+                        "StandardPack"
+                    ],
+                    "type": "string"
+                },
+                "ColumnPreferences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/Column"
+                    }
+                },
+                "AutoCorrectQuantities": {
+                    "type": "boolean"
+                },
+                "AttritionEnabled": {
+                    "type": "boolean"
+                },
+                "AutoPopulateCref": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        },
+        "PackOptionWithPricing": {
+            "type": "object",
+            "properties": {
+                "PartId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "DigiKeyPartNumber": {
+                    "type": "string"
+                },
+                "ManufacturerPartNumber": {
+                    "type": "string"
+                },
+                "Quantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "PackType": {
+                    "type": "string"
+                },
+                "QuantityAvailable": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "MinimumOrderQuantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "CalculatedUnitPrice": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "ExtendedPrice": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "BreakPrice": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "BreakQuantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "IsUpsell": {
+                    "type": "boolean"
+                },
+                "ValueAdditionalFee": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "SubPackOptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/PackOptionWithPricing"
+                    }
+                },
+                "FormattedUnitPrice": {
+                    "type": "string"
+                },
+                "FormattedExtendedPrice": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "PartOption": {
+            "type": "object",
+            "properties": {
+                "PartId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "DigiKeyPartNumber": {
+                    "type": "string"
+                },
+                "Manufacturer": {
+                    "type": "string"
+                },
+                "ManufacturerPartNumber": {
+                    "type": "string"
+                },
+                "Description": {
+                    "type": "string"
+                },
+                "PartDetailUrl": {
+                    "type": "string"
+                },
+                "SubstituteType": {
+                    "type": "string"
+                },
+                "MinimumOrderQuantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "QuantityAvailable": {
+                    "type": "string"
+                },
+                "TariffStatus": {
+                    "format": "int32",
+                    "enum": [
+                        "NoTariff",
+                        "TariffPending",
+                        "TariffApplied"
+                    ],
+                    "type": "integer"
+                },
+                "MasterPartId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "UnitPrice": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "PartsByListIdResponse": {
+            "type": "object",
+            "properties": {
+                "PartsList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/ListPart"
+                    }
+                },
+                "TotalParts": {
+                    "format": "int32",
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false
+        },
+        "ReferenceList": {
+            "type": "object",
+            "properties": {
+                "ListId": {
+                    "type": "string"
+                },
+                "IsGuestList": {
+                    "type": "boolean"
+                },
+                "IsRevision": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        },
+        "RequestedPart": {
+            "type": "object",
+            "properties": {
+                "UniqueId": {
+                    "type": "string"
+                },
+                "PartId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "RequestedPartNumber": {
+                    "type": "string"
+                },
+                "OriginalPartNumber": {
+                    "type": "string"
+                },
+                "ManufacturerName": {
+                    "type": "string"
+                },
+                "CustomerReference": {
+                    "type": "string"
+                },
+                "ReferenceDesignator": {
+                    "type": "string"
+                },
+                "Notes": {
+                    "type": "string"
+                },
+                "SelectedQuantityIndex": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "Attrition": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "AlternateParts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "Quantities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/RequestedQuantity"
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "RequestedQuantity": {
+            "type": "object",
+            "properties": {
+                "SelectedPackType": {
+                    "type": "string"
+                },
+                "SelectedSubPackType": {
+                    "type": "string"
+                },
+                "Quantity": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "TargetPrice": {
+                    "format": "double",
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "Revision": {
+            "type": "object",
+            "properties": {
+                "Id": {
+                    "type": "string"
+                },
+                "ListId": {
+                    "type": "string"
+                },
+                "RevisionNumber": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "DateCreated": {
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "Parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#\/definitions\/RequestedPart"
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "UserInformation": {
+            "type": "object",
+            "properties": {
+                "ContactId": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "AccountId": {
+                    "format": "int32",
+                    "type": "integer"
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "tags": []
+}
