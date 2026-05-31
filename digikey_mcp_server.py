@@ -69,34 +69,68 @@ DIGIKEY_TOKEN_CACHE = Path(os.getenv("DIGIKEY_TOKEN_CACHE") or _default_token_ca
 # easier to recover from than a hung process.
 _REQUEST_TIMEOUT_SECS = int(os.getenv("DIGIKEY_HTTP_TIMEOUT_SECS", "30"))
 
+# Refresh ~60 s before a token actually expires so concurrent calls don't race
+# DigiKey's clock skew. Both auth contexts (client_credentials and user) share
+# this. Tokens live ~1799 s, so this is a small fraction.
+_TOKEN_REFRESH_LEEWAY_SECS = 60
+
 # Initialize FastMCP server
 mcp = FastMCP("DigiKey MCP Server")
 
-def get_access_token():
-    """Get OAuth2 access token from DigiKey."""
-    # Check if credentials are loaded
+# Client-credentials token state. Mirrors the user-context layout below: cached
+# token + expiry timestamp, refreshed on demand with a lock. The previous code
+# fetched once at module load and reused the string forever — fine for short-
+# lived stdio children spawned per session, but a long-running HTTP deployment
+# would 401 on every Product Search call ~30 minutes in (DigiKey expires
+# client_credentials access tokens around there).
+_CLIENT_TOKEN_LOCK = threading.Lock()
+_CLIENT_TOKEN_STATE: dict = {"access_token": None, "expires_at": 0}
+
+
+def _fetch_client_credentials_token() -> dict:
+    """Hit DigiKey's token endpoint and return the full response.
+    Separated so get_access_token can stay focused on cache/refresh decisions."""
     if not CLIENT_ID or not CLIENT_SECRET:
         raise ValueError("CLIENT_ID and CLIENT_SECRET must be set in .env file")
-    
-    data = {
-        "grant_type": "client_credentials",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    
     endpoint = "SANDBOX" if USE_SANDBOX else "PRODUCTION"
-    logger.info(f"Requesting token from {endpoint} with CLIENT_ID: {CLIENT_ID[:10]}...")
-    resp = requests.post(TOKEN_URL, data=data, headers=headers, timeout=_REQUEST_TIMEOUT_SECS)
-    
+    logger.info(f"Requesting client_credentials token from {endpoint} (CLIENT_ID: {CLIENT_ID[:10]}…)")
+    resp = requests.post(
+        TOKEN_URL,
+        data={
+            "grant_type": "client_credentials",
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=_REQUEST_TIMEOUT_SECS,
+    )
     if resp.status_code != 200:
         logger.error(f"OAuth error: {resp.status_code} - {resp.text}")
         resp.raise_for_status()
-    
-    logger.info("Successfully obtained access token")
-    return resp.json()["access_token"]
+    return resp.json()
 
-# Get access token at startup
+
+def get_access_token() -> str:
+    """Return a valid client_credentials access token, refreshing if within the
+    leeway window of expiry. Thread-safe; concurrent callers share one refresh."""
+    if OFFLINE_MODE:
+        return "offline-mode-no-token"
+    with _CLIENT_TOKEN_LOCK:
+        now = int(time.time())
+        cached = _CLIENT_TOKEN_STATE["access_token"]
+        if cached and now < _CLIENT_TOKEN_STATE["expires_at"] - _TOKEN_REFRESH_LEEWAY_SECS:
+            return cached
+        tokens = _fetch_client_credentials_token()
+        _CLIENT_TOKEN_STATE["access_token"] = tokens["access_token"]
+        # DigiKey client_credentials tokens default to ~1799s (~30 min). The
+        # leeway in the read path means we refresh ~60s before actual expiry, so
+        # races against the wall clock don't surface as 401s.
+        _CLIENT_TOKEN_STATE["expires_at"] = now + int(tokens.get("expires_in", 1799))
+        logger.info("Refreshed client_credentials token; valid until ts=%s.",
+                    _CLIENT_TOKEN_STATE["expires_at"])
+        return _CLIENT_TOKEN_STATE["access_token"]
+
+
 logger.info("=== STARTING DIGIKEY MCP SERVER ===")
 if USE_SANDBOX:
     logger.warning(
@@ -106,15 +140,18 @@ if USE_SANDBOX:
     )
 if OFFLINE_MODE:
     logger.info("DIGIKEY_OFFLINE_MODE=1 — skipping OAuth; HTTP calls must be intercepted by the caller.")
-    access_token = "offline-mode-no-token"
 else:
-    access_token = get_access_token()
+    # Eager fetch at startup so credential problems surface immediately rather
+    # than waiting for the first tool call. Subsequent calls go through the
+    # cache; refresh fires automatically when within the leeway window.
+    get_access_token()
 logger.info("=== SERVER READY ===")
+
 
 def _get_headers(customer_id: str = "0"):
     """Get standard headers for DigiKey API requests."""
     return {
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": f"Bearer {get_access_token()}",
         "X-DIGIKEY-Client-Id": CLIENT_ID,
         "Content-Type": "application/json",
         "X-DIGIKEY-Locale-Site": "US",
@@ -165,9 +202,6 @@ _USER_TOKEN_STATE: dict = {
     "access_token": None,
     "expires_at": 0,  # unix ts; 0 = never fetched / always-expired sentinel
 }
-# Refresh ~60s before the token actually expires so concurrent calls don't race
-# DigiKey's clock skew. Access tokens live ~1799s, so this is a small fraction.
-_TOKEN_REFRESH_LEEWAY_SECS = 60
 _TOKEN_CACHE_WRITE_OK = True  # flips to False after first write failure; suppresses repeat warnings
 
 
